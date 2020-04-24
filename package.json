@@ -1,6 +1,6 @@
 {
   "name": "vue-pwa-auth0",
-  "version": "0.0.3",
+  "version": "0.0.X (dev)",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",

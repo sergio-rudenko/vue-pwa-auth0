@@ -26,7 +26,18 @@
       <template v-slot:footer>
         <div class="d-flex bg-dark text-light align-items-center px-3 py-2">
           <strong class="mr-auto">version: {{ version }}</strong>
-          <b-button size="sm" @click="reload()">
+
+          <b-button
+            v-if="updateExists"
+            @click="refreshApp"
+            variant="success"
+            size="sm"
+          >
+            New version available! <br />
+            Click to update
+          </b-button>
+
+          <b-button v-else @click="reloadApp" size="sm">
             Releoad source
           </b-button>
         </div>
@@ -52,7 +63,20 @@ export default {
   },
 
   methods: {
-    reload() {
+    showRefreshUI(e) {
+      this.registration = e.detail;
+      this.updateExists = true;
+    },
+
+    refreshApp() {
+      this.updateExists = false;
+      if (!this.registration || !this.registration.waiting) {
+        return;
+      }
+      this.registration.waiting.postMessage("skipWaiting");
+    },
+
+    reloadApp() {
       window.location.reload();
     },
   },
@@ -61,9 +85,22 @@ export default {
     ...mapGetters(["version"]),
   },
 
+  created() {
+    document.addEventListener("swUpdated", this.showRefreshUI, { once: true });
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (this.refreshing) return;
+      this.refreshing = true;
+      this.reloadApp();
+    });
+  },
+
   data: () => {
     return {
       sidebarActive: false,
+
+      refreshing: false,
+      registration: null,
+      updateExists: false,
     };
   },
 };

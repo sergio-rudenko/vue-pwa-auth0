@@ -10,8 +10,19 @@ if (process.env.NODE_ENV === "production") {
           "For more details, visit https://goo.gl/AFskqB"
       );
     },
-    registered() {
-      console.log("Service worker has been registered.");
+    // registered() {
+    //   console.log("Service worker has been registered.");
+    // },
+    registered(registration) {
+      let period = 60 * 5; //FIXME! 1h in production
+      console.log(
+        "Service worker has been registered, check for updates every " +
+          period +
+          " sec."
+      );
+      setInterval(() => {
+        registration.update();
+      }, 1000 * period); // ms
     },
     cached() {
       console.log("Content has been cached for offline use.");
@@ -19,8 +30,19 @@ if (process.env.NODE_ENV === "production") {
     updatefound() {
       console.log("New content is downloading.");
     },
-    updated() {
-      console.log("New content is available; please refresh.");
+    // updated() {
+    //   console.log("New content is available; please refresh.");
+    // },
+    updated(registration) {
+      let eventName = "swUpdated";
+      console.log(
+        "New content is available; please refresh. Generated '" +
+          eventName +
+          "' event"
+      );
+      document.dispatchEvent(
+        new CustomEvent(eventName, { detail: registration })
+      );
     },
     offline() {
       console.log(
@@ -29,6 +51,6 @@ if (process.env.NODE_ENV === "production") {
     },
     error(error) {
       console.error("Error during service worker registration:", error);
-    }
+    },
   });
 }
