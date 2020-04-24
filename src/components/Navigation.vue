@@ -83,6 +83,33 @@ export default {
 
       this.updateAlertActive = true;
       this.updateExists = true;
+
+      if (Notification.permission === "granted") {
+        navigator.serviceWorker.getRegistration().then(function(reg) {
+          var options = {
+            body: "Доступна новая версия. Обновмте приложение.",
+            icon: "img/icons/android-chrome-192x192.png",
+            vibrate: [100, 50, 100],
+            data: {
+              dateOfArrival: Date.now(),
+              primaryKey: 1,
+            },
+            // actions: [
+            //   {
+            //     action: "explore",
+            //     title: "Explore this new world",
+            //     icon: "images/checkmark.png",
+            //   },
+            //   {
+            //     action: "close",
+            //     title: "Close notification",
+            //     icon: "images/xmark.png",
+            //   },
+            // ],
+          };
+          if (reg) reg.showNotification("Hello from vue pwa!", options);
+        });
+      }
     },
 
     refreshApp() {
