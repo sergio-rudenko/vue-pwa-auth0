@@ -1,0 +1,6 @@
+{
+  "domain": "DOMAIN",
+  "clientId": "CLIENT_ID",
+  "audience": "https://DOMAIN/api/v2/",
+  "scope": "read:current_user update:current_user_metadata"
+}

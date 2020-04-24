@@ -1,0 +1,6 @@
+{
+  "domain": "dev-rulqx225.eu.auth0.com",
+  "clientId": "Vn3Me1KVwy6lBflxb0hoGCjsIeCwyqiz",
+  "audience": "https://dev-rulqx225.eu.auth0.com/api/v2/",
+  "scope": "read:current_user update:current_user_metadata"
+}
