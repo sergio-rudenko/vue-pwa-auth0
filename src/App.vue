@@ -2,6 +2,12 @@
   <div id="app">
     <navigation logo="BAST::CLOUD" />
     <router-view />
+
+    <!-- <b-container class="d-flex justify-content-center my-3">
+      <b-button size="sm" @click="updateAlertActive = !updateAlertActive">
+        {{ showBottom ? "Hide" : "Show" }} Fixed bottom Alert
+      </b-button>
+    </b-container> -->
   </div>
 </template>
 

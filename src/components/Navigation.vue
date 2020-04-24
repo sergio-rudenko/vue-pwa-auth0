@@ -43,6 +43,21 @@
         </div>
       </template>
     </b-sidebar>
+
+    <b-alert
+      v-model="updateAlertActive"
+      class="position-fixed fixed-bottom m-0 rounded-0"
+      style="z-index: 2000;"
+      variant="info"
+      dismissible
+    >
+      <b-container class="d-flex align-items-center">
+        <strong class="mr-auto">Доступна новая версия</strong>
+        <b-button @click="refreshApp" size="sm" variant="success">
+          Обновить
+        </b-button>
+      </b-container>
+    </b-alert>
   </div>
 </template>
 
@@ -65,6 +80,8 @@ export default {
   methods: {
     showRefreshUI(e) {
       this.registration = e.detail;
+
+      this.updateAlertActive = true;
       this.updateExists = true;
     },
 
@@ -97,6 +114,7 @@ export default {
   data: () => {
     return {
       sidebarActive: false,
+      updateAlertActive: false,
 
       refreshing: false,
       registration: null,
