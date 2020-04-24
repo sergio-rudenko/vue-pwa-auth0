@@ -8,7 +8,7 @@ export default new Vuex.Store({
 
   state: {
     debug: true,
-    version: "0.0.4 /c1",
+    version: "0.0.4 /c3",
 
     user: {},
   },
