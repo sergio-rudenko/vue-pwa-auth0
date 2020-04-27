@@ -1,23 +1,30 @@
 <template>
   <div id="app">
-    <navigation logo="BAST::CLOUD" />
+    <navigation title="CLOUD::BAST" />
     <router-view />
 
     <!-- <b-container class="d-flex justify-content-center my-3">
-      <b-button size="sm" @click="updateAlertActive = !updateAlertActive">
-        {{ showBottom ? "Hide" : "Show" }} Fixed bottom Alert
+      <b-button size="sm" @click="myAction">
+        DEBUG: action
       </b-button>
     </b-container> -->
   </div>
 </template>
 
 <script>
-import { getUserData } from "./auth/authService";
-import Navigation from "./components/Navigation.vue";
+import { getUserData } from "@/auth/authService";
+import Navigation from "@/components/Navigation.vue";
 
 export default {
   components: {
     Navigation,
+  },
+
+  methods: {
+    myAction() {
+      window.console.log("previous_version", "0.0.X");
+      localStorage.setItem("previous_version", "0.0.X");
+    },
   },
 
   computed: {

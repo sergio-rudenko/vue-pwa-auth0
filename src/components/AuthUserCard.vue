@@ -82,33 +82,38 @@ export default {
 
     userPicture() {
       var result = "";
-      if (this.user.picture) {
-        result = this.user.picture;
+      const user = this.user;
+      if (user.picture) {
+        result = user.picture;
       }
       return result;
     },
 
     userPictureAlt() {
-      return "..";
+      const user = this.user;
+      const n = user.given_name.split("")[0] || ".";
+      const f = user.family_name.split("")[0] || ".";
+
+      return n.toUpperCase() + f.toUpperCase();
     },
 
     userFullName() {
       var result = "";
+      const user = this.user;
+      if (user.given_name) result += user.given_name;
+      if (user.family_name) result += " " + user.family_name;
 
-      if (this.user.given_name) result += this.user.given_name;
-
-      if (this.user.family_name) result += " " + this.user.family_name;
-
-      if (result === "" && this.user.nickname) {
-        result += this.user.nickname;
+      if (result === "" && user.nickname) {
+        result += user.nickname;
       }
       return result;
     },
 
     userEmail() {
       var result = "";
-      if (this.user.email_verified) {
-        result = this.user.email;
+      const user = this.user;
+      if (user.email_verified) {
+        result = user.email;
       }
       return result;
     },

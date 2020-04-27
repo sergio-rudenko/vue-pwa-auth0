@@ -12,8 +12,25 @@ Vue.use(VueRouter);
 const routes = [
   {
     path: "/",
-    name: "Home",
+    name: "Cloud::BAST",
     component: Home,
+  },
+  {
+    path: "/profile",
+    name: "Пользователь",
+    component: Profile,
+    beforeEnter: authGuard,
+  },
+  {
+    path: "/settings",
+    name: "Настройки",
+    component: () => import("../views/Settings.vue"),
+  },
+
+  {
+    path: "/testing",
+    name: "Тестирование",
+    component: () => import("../views/Testing.vue"),
   },
   {
     path: "/about",
@@ -24,12 +41,7 @@ const routes = [
     component: () =>
       import(/* webpackChunkName: "about" */ "../views/About.vue"),
   },
-  {
-    path: "/profile",
-    name: "profile",
-    component: Profile,
-    beforeEnter: authGuard,
-  },
+
   // {
   //   path: "/external-api",
   //   name: "external-api",

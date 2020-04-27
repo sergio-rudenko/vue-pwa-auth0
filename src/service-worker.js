@@ -27,24 +27,26 @@ self.addEventListener("message", (e) => {
  */
 self.addEventListener("notificationclose", function(event) {
   var notification = event.notification;
-  var primaryKey = notification.data.primaryKey;
-
-  console.log("Closed notification: " + primaryKey);
+  console.log("notificationclose:", notification);
 });
 
 self.addEventListener("notificationclick", function(e) {
   var notification = e.notification;
-  var primaryKey = notification.data.primaryKey;
   var action = e.action;
+
+  console.log("notificationclick: ", action);
+  console.log("notification:", notification);
 
   if (action === "close") {
     notification.close();
-    console.log('onclick: "close" ' + primaryKey);
+  } else if (action === "explore") {
+    notification.close();
+    clients.openWindow(notification.data.url);
   } else {
     notification.close();
-    console.log('onclick: "' + action + '" ' + primaryKey);
-    clients.openWindow("http://www.example.com");
   }
+
+  //TODO: some other actions...
 });
 
 workbox.core.clientsClaim(); // Vue CLI 4 and Workbox v4, else

@@ -8,9 +8,20 @@ export default new Vuex.Store({
 
   state: {
     debug: true,
-    version: "0.0.5",
+    version: "0.0.6 rc1",
 
-    user: {},
+    user: {
+      picture: "",
+      nickname: "",
+      given_name: "",
+      family_name: "",
+      email: "",
+      email_verified: false,
+      phone: "",
+      phone_verified: false,
+      app_metadata: {},
+      user_metadata: {},
+    },
   },
 
   getters: {
@@ -21,12 +32,23 @@ export default new Vuex.Store({
     user: (state) => {
       return state.user;
     },
+
+    app_metadata: (state) => {
+      return state.user.app_metadata;
+    },
+
+    user_metadata: (state) => {
+      return state.user.user_metadata;
+    },
   },
 
   mutations: {
     setUser(state, data) {
       if (state.debug) window.console.log("setUser:", data);
-      state.user = data;
+      for (var key in data) {
+        if (state.debug) window.console.log(("key:", key));
+        state.user[key] = data[key];
+      }
     },
 
     setUserData(state, data) {

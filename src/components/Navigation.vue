@@ -3,24 +3,58 @@
     <b-navbar toggleable="true" type="dark" variant="primary">
       <b-icon
         icon="list"
-        scale="2.5"
+        scale="1.5"
         class="text-light"
         @click="sidebarActive = true"
       />
       <b-navbar-brand href="#">
-        {{ logo }}
+        {{ $route.name }}
       </b-navbar-brand>
 
       <!-- TODO: CloudIndicator -->
-      <b-iconstack font-scale="2.5">
+      <b-icon icon="star" scale="1.25" variant="secondary" />
+      <!-- <b-iconstack font-scale="2.5">
         <b-icon stacked icon="cloud" scale="0.75" variant="secondary"></b-icon>
         <b-icon stacked icon="slash-circle" variant="warning"></b-icon>
-      </b-iconstack>
+      </b-iconstack> -->
     </b-navbar>
 
     <b-sidebar v-model="sidebarActive" no-header backdrop>
       <template v-slot:default>
         <auth-user-card />
+
+        <!-- TODO: menu component -->
+        <b-list-group>
+          <div v-for="(item, i) in menuItems" :key="i">
+            <b-list-group-item
+              v-if="item.type && item.type === 'header'"
+              class="d-flex align-items-center"
+            >
+              <span
+                class="py-0"
+                style="font: 0.75rem/1.5 var(--font-family-sans-serif);"
+              >
+                {{ item.title }}
+              </span>
+            </b-list-group-item>
+
+            <b-list-group-item
+              v-else-if="item.path !== $route.path"
+              style="border: 0px solid rgba(0, 0, 0, 0.125);"
+              class="d-flex align-items-center"
+              :disabled="item.disabled"
+              :to="item.path"
+            >
+              <b-icon
+                v-if="item.icon"
+                :icon="item.icon"
+                scale="1.2"
+                variant="medium"
+              ></b-icon>
+              <span class="pl-3"> {{ item.title }}</span>
+            </b-list-group-item>
+          </div>
+        </b-list-group>
       </template>
 
       <template v-slot:footer>
@@ -58,6 +92,19 @@
         </b-button>
       </b-container>
     </b-alert>
+
+    <b-alert
+      v-model="newVersionAlertActive"
+      class="position-fixed fixed-bottom m-0 rounded-0"
+      style="z-index: 2000;"
+      variant="success"
+      dismissible
+    >
+      <b-container class="d-flex align-items-center">
+        <strong class="mr-auto">Обновлено:</strong>
+        v{{ oldVersion }} -> v{{ version }}
+      </b-container>
+    </b-alert>
   </div>
 </template>
 
@@ -71,7 +118,7 @@ export default {
     AuthUserCard,
   },
   props: {
-    logo: {
+    title: {
       type: String,
       required: true,
     },
@@ -136,12 +183,64 @@ export default {
       this.refreshing = true;
       this.reloadApp();
     });
+
+    this.oldVersion = localStorage.getItem("previous_version");
+    if (this.oldVersion) {
+      this.newVersionAlertActive = true;
+      localStorage.removeItem("previous_version");
+    }
   },
 
   data: () => {
     return {
+      menuItems: [
+        {
+          title: "Меню приложения:",
+          type: "header",
+        },
+        {
+          title: "Главная",
+          icon: "house",
+          path: "/",
+          disabled: false,
+          divider: true,
+        },
+        {
+          title: "Пользователь",
+          icon: "people-circle",
+          path: "/profile",
+          disabled: false,
+          divider: true,
+        },
+        {
+          title: "Тестирование",
+          icon: "tools",
+          path: "/testing",
+          disabled: false,
+          divider: true,
+        },
+        {
+          title: "Настройки",
+          icon: "gear",
+          path: "/settings",
+          disabled: true,
+          divider: true,
+        },
+        {
+          title: "О программе",
+          icon: "info-circle",
+          path: "/about",
+          disabled: false,
+          divider: false,
+        },
+      ],
+
       sidebarActive: false,
+
       updateAlertActive: false,
+      newVersionAlertActive: false,
+
+      oldVersion: null,
 
       refreshing: false,
       registration: null,

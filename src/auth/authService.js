@@ -51,3 +51,27 @@ export const getUserData = (url, user_id) => {
       return data;
     });
 };
+
+export const updateUserData = (url, user_id, metadata) => {
+  // console.log("getUserData:", url, user_id);
+
+  const authService = getInstance();
+
+  return authService
+    .getTokenSilently()
+    .then((accessToken) =>
+      fetch(url + "users/" + user_id, {
+        method: "PATCH",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ user_metadata: metadata }),
+      })
+    )
+    .then((result) => result.json())
+    .then((data) => {
+      // console.log("PATCH:", data);
+      return data;
+    });
+};
