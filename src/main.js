@@ -31,13 +31,15 @@ Vue.use(Auth0Plugin, {
 
 Vue.config.productionTip = false;
 
-if (Notification.permission === "blocked") {
-  /* the user has previously denied push. Can't reprompt. */
-  console.log("Notification permission blocked: ", status);
-} else {
-  Notification.requestPermission(function(status) {
-    console.log("Notification permission status:", status);
-  });
+if (Notification) {
+  if (Notification.permission === "blocked") {
+    /* the user has previously denied push. Can't reprompt. */
+    console.log("Notification permission blocked: ", status);
+  } else {
+    Notification.requestPermission(function(status) {
+      console.log("Notification permission status:", status);
+    });
+  }
 }
 
 // if (Notification.permission == 'granted') {

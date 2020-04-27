@@ -54,18 +54,21 @@ export default {
   methods: {
     sendNotification(i) {
       // https://developer.mozilla.org/ru/docs/Web/API/ServiceWorkerRegistration/showNotification
-      if (Notification.permission === "granted") {
-        var msg = this.notifications[i];
 
-        window.console.log(msg.title);
-        navigator.serviceWorker.getRegistration().then(function(reg) {
-          if (!msg.options.data) msg.options.data = {};
-          msg.options.data.dateOfArrival = Date.now();
-          msg.options.data.primaryKey = i;
+      if (Notification) {
+        if (Notification.permission === "granted") {
+          var msg = this.notifications[i];
 
-          if (reg) reg.showNotification(msg.title, msg.options);
-        });
-      } else window.console.log("permission:", Notification.permission);
+          window.console.log(msg.title);
+          navigator.serviceWorker.getRegistration().then(function(reg) {
+            if (!msg.options.data) msg.options.data = {};
+            msg.options.data.dateOfArrival = Date.now();
+            msg.options.data.primaryKey = i;
+
+            if (reg) reg.showNotification(msg.title, msg.options);
+          });
+        } else window.console.log("permission:", Notification.permission);
+      }
     },
   },
 
