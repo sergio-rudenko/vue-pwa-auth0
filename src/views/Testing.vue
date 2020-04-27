@@ -4,48 +4,60 @@
       <h2>Уведомления:</h2>
     </div>
 
-    <b-media
-      class="mx-2 mb-2 pb-2"
-      style="border-bottom: 1px solid rgba(0, 0, 0, 0.125);"
-      v-for="(item, i) in notifications"
-      @click="sendNotification(i)"
-      :key="i"
-    >
-      <template v-slot:aside>
-        <!-- <b-avatar class="my-3" size="4rem" :src="item.options.icon"></b-avatar> -->
-        <b-img width="64" alt="img" :src="item.options.icon"></b-img>
-      </template>
+    <div v-if="appleIosDevice" class="title">
+      <h4>На Apple не работают... (пока)</h4>
+      <b-img width="64" height="64" alt="img" :src="vueLogo"></b-img>
+    </div>
 
-      <div class="row no-gutters justify-content-between align-items-center">
-        <div class="col-9">
-          <div class="text-truncate">
-            <strong>{{ item.title }}</strong>
+    <div v-else>
+      <b-media
+        class="mx-2 mb-2 pb-2"
+        style="border-bottom: 1px solid rgba(0, 0, 0, 0.125);"
+        v-for="(item, i) in notifications"
+        @click="sendNotification(i)"
+        :key="i"
+      >
+        <template v-slot:aside>
+          <!-- <b-avatar class="my-3" size="4rem" :src="item.options.icon"></b-avatar> -->
+          <b-img
+            width="64"
+            height="64"
+            alt="img"
+            :src="item.options.icon"
+          ></b-img>
+        </template>
+
+        <div class="row no-gutters justify-content-between align-items-center">
+          <div class="col-9">
+            <div class="text-truncate">
+              <strong>{{ item.title }}</strong>
+            </div>
           </div>
-        </div>
-        <!-- <div class="col-2 justify-content-end mr-1">
+          <!-- <div class="col-2 justify-content-end mr-1">
                   <b-icon icon="pencil" />
                 </div> -->
-      </div>
-
-      <div
-        v-if="item.options.body !== ''"
-        class="row no-gutters justify-content-between"
-      >
-        <div class="text-wrap">
-          {{ item.options.body }}
         </div>
-      </div>
 
-      <div class="row no-gutters justify-content-between mb-2">
         <div
-          class="text-truncate"
-          style="font: 0.66rem/1.5 var(--font-family-sans-serif);"
-          v-if="item.options.tag !== undefined"
+          v-if="item.options.body !== ''"
+          class="row no-gutters justify-content-between"
         >
-          tag: [{{ item.options.tag }}]
+          <div class="text-wrap">
+            {{ item.options.body }}
+          </div>
         </div>
-      </div>
-    </b-media>
+
+        <div class="row no-gutters justify-content-between mb-2">
+          <div
+            class="text-truncate"
+            style="font: 0.66rem/1.5 var(--font-family-sans-serif);"
+            v-if="item.options.tag !== undefined"
+          >
+            tag: [{{ item.options.tag }}]
+          </div>
+        </div>
+      </b-media>
+    </div>
   </div>
 </template>
 
@@ -69,6 +81,16 @@ export default {
           });
         } else window.console.log("permission:", Notification.permission);
       }
+    },
+  },
+
+  computed: {
+    appleIosDevice() {
+      return !("Notification" in window);
+    },
+
+    vueLogo() {
+      return require("@/assets/logo.png");
     },
   },
 
