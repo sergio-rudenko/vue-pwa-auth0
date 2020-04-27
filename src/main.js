@@ -31,7 +31,7 @@ Vue.use(Auth0Plugin, {
 
 Vue.config.productionTip = false;
 
-if (Notification) {
+if ("Notification" in window) {
   if (Notification.permission === "blocked") {
     /* the user has previously denied push. Can't reprompt. */
     console.log("Notification permission blocked: ", status);

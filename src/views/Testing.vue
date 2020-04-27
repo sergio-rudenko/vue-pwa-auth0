@@ -55,7 +55,7 @@ export default {
     sendNotification(i) {
       // https://developer.mozilla.org/ru/docs/Web/API/ServiceWorkerRegistration/showNotification
 
-      if (Notification) {
+      if ("Notification" in window) {
         if (Notification.permission === "granted") {
           var msg = this.notifications[i];
 
