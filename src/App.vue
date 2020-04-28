@@ -14,13 +14,33 @@
       dismissible
       v-model="alertNotification.visible"
       :variant="alertNotification.variant"
-      class="position-fixed fixed-bottom m-0 px-0 py-2 rounded-0"
+      class="position-fixed fixed-bottom m-0 px-0 py-2 rounded-2"
       style="z-index: 9999;"
     >
-      <b-container class="d-flex align-items-center py-0 px-2">
-        <app-notification :data="alertNotification.data" />
-        <div v-if="'actions' in alertNotification.data.options">
-          actions
+      <b-container fluid class="py-0 px-2">
+        <app-notification :data="alertNotification.data" /> <br />
+        <div
+          v-if="'actions' in alertNotification.data.options"
+          class="d-flex justify-content-center"
+        >
+          <b-row align-h="around">
+            <b-col
+              v-for="(button, i) in alertNotification.data.options.actions"
+              :key="i"
+              cols="5"
+            >
+              <b-button
+                variant="info"
+                class="mb-2 text-nowrap"
+                @click="alertNotificationAction(button.action)"
+                :title="button.title"
+              >
+                <!-- <b-icon icon="gear-fill" aria-hidden="true" /> -->
+                <!-- <b-img src="@/assets/logo.png" alt="logo" /> -->
+                {{ button.title }}
+              </b-button>
+            </b-col>
+          </b-row>
         </div>
       </b-container>
     </b-alert>
@@ -50,6 +70,22 @@ export default {
         variant: "info",
         data: { ...msg },
       };
+    },
+
+    alertNotificationAction(action, num) {
+      window.console.log(action, num);
+      if (action === "explore") {
+        const alert = this.alertNotification;
+        const options = alert.data.options;
+        const url = "url" in options.data ? options.data.url : "";
+
+        alert.visible = false;
+        window.open(url, "_blank");
+      }
+
+      if (action === "close") {
+        this.alertNotification.visible = false;
+      }
     },
   },
 
