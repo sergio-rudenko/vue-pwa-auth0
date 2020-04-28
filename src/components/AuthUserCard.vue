@@ -70,7 +70,8 @@ export default {
   methods: {
     login() {
       window.console.log("login");
-      this.$auth.loginWithRedirect();
+      // this.$auth.loginWithRedirect();
+      this.$auth.loginWithPopup();
     },
 
     logout() {

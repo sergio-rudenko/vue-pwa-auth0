@@ -3,11 +3,11 @@
     <app-navigation title="CLOUD::BAST" />
     <router-view />
 
-    <b-container class="d-flex justify-content-center my-3">
+    <!-- <b-container class="d-flex justify-content-center my-3">
       <b-button size="sm" @click="myAction">
         DEBUG: action
       </b-button>
-    </b-container>
+    </b-container> -->
 
     <!-- in app notification -->
     <b-alert
