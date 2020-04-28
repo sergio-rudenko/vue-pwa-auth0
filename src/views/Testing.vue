@@ -26,7 +26,6 @@ export default {
 
   methods: {
     sendNotification(i) {
-      var notificationSent = false;
       // https://developer.mozilla.org/ru/docs/Web/API/ServiceWorkerRegistration/showNotification
       const app = this.$root.$children[0]; // for access App
       var msg = this.notifications[i];
@@ -41,15 +40,15 @@ export default {
             if (reg) {
               // window.console.log("reg:", reg);
               reg.showNotification(msg.title, msg.options);
-              notificationSent = true;
+            } else {
+              app.showAlertNotification(msg);
             }
           });
-        } else window.console.log("permission:", Notification.permission);
-      }
-
-      if (!notificationSent) {
-        // fallback: show as alert inside app
-        //window.console.log("app:", app);
+        } else {
+          window.console.log("permission:", Notification.permission);
+          app.showAlertNotification(msg);
+        }
+      } else {
         app.showAlertNotification(msg);
       }
     },
