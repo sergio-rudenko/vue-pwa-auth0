@@ -5,8 +5,16 @@
         <b-avatar
           class="my-3"
           size="4rem"
+          to="/profile"
+          :badge="userBadge"
+          badge-bottom
+          badge-rigrht
+          badge-offset="2px"
+          variant="primary"
+          badge-variant="danger"
           :text="userPicture === '' ? userPictureAlt : ''"
           :src="userPicture"
+          rounded
         ></b-avatar>
       </template>
 
@@ -95,6 +103,10 @@ export default {
       const f = user.family_name.split("")[0] || ".";
 
       return n.toUpperCase() + f.toUpperCase();
+    },
+
+    userBadge() {
+      return null;
     },
 
     userFullName() {

@@ -4,93 +4,68 @@
       <h2>Уведомления:</h2>
     </div>
 
-    <div v-if="appleIosDevice" class="title">
-      <h4>На Apple не работают... (пока)</h4>
-      <b-img width="64" height="64" alt="img" :src="vueLogo"></b-img>
-    </div>
-
-    <div v-else>
-      <b-media
-        class="mx-2 mb-2 pb-2"
-        style="border-bottom: 1px solid rgba(0, 0, 0, 0.125);"
-        v-for="(item, i) in notifications"
-        @click="sendNotification(i)"
-        :key="i"
-      >
-        <template v-slot:aside>
-          <!-- <b-avatar class="my-3" size="4rem" :src="item.options.icon"></b-avatar> -->
-          <b-img
-            width="64"
-            height="64"
-            alt="img"
-            :src="item.options.icon"
-          ></b-img>
-        </template>
-
-        <div class="row no-gutters justify-content-between align-items-center">
-          <div class="col-9">
-            <div class="text-truncate">
-              <strong>{{ item.title }}</strong>
-            </div>
-          </div>
-          <!-- <div class="col-2 justify-content-end mr-1">
-                  <b-icon icon="pencil" />
-                </div> -->
-        </div>
-
-        <div
-          v-if="item.options.body !== ''"
-          class="row no-gutters justify-content-between"
-        >
-          <div class="text-wrap">
-            {{ item.options.body }}
-          </div>
-        </div>
-
-        <div class="row no-gutters justify-content-between mb-2">
-          <div
-            class="text-truncate"
-            style="font: 0.66rem/1.5 var(--font-family-sans-serif);"
-            v-if="item.options.tag !== undefined"
-          >
-            tag: [{{ item.options.tag }}]
-          </div>
-        </div>
-      </b-media>
+    <div
+      class="m-2 pb-2"
+      style="border-bottom: 1px solid rgba(0, 0, 0, 0.125);"
+      v-for="(item, i) in notifications"
+      @click="sendNotification(i)"
+      :key="i"
+    >
+      <app-notification :data="item" />
     </div>
   </div>
 </template>
 
 <script>
+import AppNotification from "@/components/AppNotification.vue";
+
 export default {
+  components: {
+    AppNotification,
+  },
+
   methods: {
     sendNotification(i) {
+      var notificationSent = false;
       // https://developer.mozilla.org/ru/docs/Web/API/ServiceWorkerRegistration/showNotification
+      const app = this.$root.$children[0]; // for access App
+      var msg = this.notifications[i];
 
-      if ("Notification" in window) {
-        if (Notification.permission === "granted") {
-          var msg = this.notifications[i];
-
-          window.console.log(msg.title);
+      if (this.notificationAvaliable) {
+        if (this.notifyPermissionGranted) {
           navigator.serviceWorker.getRegistration().then(function(reg) {
             if (!msg.options.data) msg.options.data = {};
             msg.options.data.dateOfArrival = Date.now();
             msg.options.data.primaryKey = i;
 
-            if (reg) reg.showNotification(msg.title, msg.options);
+            if (reg) {
+              // window.console.log("reg:", reg);
+              reg.showNotification(msg.title, msg.options);
+              notificationSent = true;
+            }
           });
         } else window.console.log("permission:", Notification.permission);
+      }
+
+      if (!notificationSent) {
+        // fallback: show as alert inside app
+        //window.console.log("app:", app);
+        app.showAlertNotification(msg);
       }
     },
   },
 
   computed: {
-    appleIosDevice() {
-      return !("Notification" in window);
+    notificationAvaliable() {
+      return "Notification" in window;
     },
 
-    vueLogo() {
-      return require("@/assets/logo.png");
+    notifyPermissionGranted() {
+      var result = false;
+      if (this.notificationAvaliable)
+        result = Notification.permission === "granted";
+
+      return result;
     },
   },
 

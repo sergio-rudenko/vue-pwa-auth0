@@ -1,29 +1,55 @@
 <template>
   <div id="app">
-    <navigation title="CLOUD::BAST" />
+    <app-navigation title="CLOUD::BAST" />
     <router-view />
 
-    <!-- <b-container class="d-flex justify-content-center my-3">
+    <b-container class="d-flex justify-content-center my-3">
       <b-button size="sm" @click="myAction">
         DEBUG: action
       </b-button>
-    </b-container> -->
+    </b-container>
+
+    <!-- in app notification -->
+    <b-alert
+      dismissible
+      v-model="alertNotification.visible"
+      :variant="alertNotification.variant"
+      class="position-fixed fixed-bottom m-0 px-0 py-2 rounded-0"
+      style="z-index: 9999;"
+    >
+      <b-container class="d-flex align-items-center py-0 px-2">
+        <app-notification :data="alertNotification.data" />
+        <div v-if="'actions' in alertNotification.data.options">
+          actions
+        </div>
+      </b-container>
+    </b-alert>
   </div>
 </template>
 
 <script>
 import { getUserData } from "@/auth/authService";
-import Navigation from "@/components/Navigation.vue";
+import AppNavigation from "@/components/AppNavigation.vue";
+import AppNotification from "@/components/AppNotification.vue";
 
 export default {
   components: {
-    Navigation,
+    AppNavigation,
+    AppNotification,
   },
 
   methods: {
     myAction() {
-      window.console.log("previous_version", "0.0.X");
-      localStorage.setItem("previous_version", "0.0.X");
+      window.console.log("DEBUG::myAction");
+      this.alertNotification.visible = true;
+    },
+
+    showAlertNotification(msg) {
+      this.alertNotification = {
+        visible: true,
+        variant: "info",
+        data: { ...msg },
+      };
     },
   },
 
@@ -62,7 +88,16 @@ export default {
   },
 
   data: () => {
-    return {};
+    return {
+      alertNotification: {
+        visible: false,
+        variant: "warning",
+        data: {
+          title: "",
+          options: {},
+        },
+      },
+    };
   },
 };
 </script>
