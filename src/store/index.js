@@ -18,7 +18,7 @@ export default new Vuex.Store({
 
   state: {
     debug: true,
-    version: "0.0.6 rc8",
+    version: "0.0.7",
 
     user: {
       picture: "",
