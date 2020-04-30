@@ -1,6 +1,6 @@
 import { getInstance } from "./index";
 
-export const authGuard = (to, from, next) => {
+export const authenGuard = (to, from, next) => {
   //   window.console.log("authGuard:");
   const authService = getInstance();
 
@@ -11,7 +11,9 @@ export const authGuard = (to, from, next) => {
     }
 
     // Otherwise, log in
-    authService.loginWithRedirect({ appState: { targetUrl: to.fullPath } });
+    authService.loginWithRedirect({
+      appState: { targetUrl: to.fullPath },
+    });
   };
 
   // If loading has already finished, check our auth state using `fn()`

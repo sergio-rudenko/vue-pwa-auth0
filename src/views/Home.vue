@@ -1,18 +1,15 @@
 <template>
   <div class="home">
     <div class="content">
-      <img v-if="isAuthenticated" alt="USER" :src="userPicture" />
-      <div v-else>
-        <img alt="LOGO" src="@/assets/logo.png" /> <br />
-        <h3>Не выполнен вход в аккаунт.</h3>
+      <div v-if="isAuthenticated">
+        <img :src="userPicture" alt="User" width="64" height="64" />
         <p>
-          Пожалуйста, воспользуйтесь кнопкой в меню или
-          <b-link to="/profile">ссылкой на профиль пользователя</b-link>
+          <strong>{{ user_name }}</strong>
         </p>
       </div>
     </div>
 
-    <b-container v-if="isAuthenticated">
+    <b-container v-if="isAuthenticated && isAuthorized">
       <b-form @submit="onSubmit" @reset="onReset">
         <b-form-group
           label="Строковый параметр:"
@@ -80,39 +77,59 @@
 </template>
 
 <script>
-import { updateUserData } from "@/auth/authService";
 import { mapGetters } from "vuex";
+
+import { updateUserData } from "@/auth/authService";
 
 export default {
   name: "Home",
   components: {},
 
-  computed: {
-    ...mapGetters(["user_metadata"]),
-
-    isAuthenticated() {
-      return !this.$auth.loading && this.$auth.isAuthenticated;
-    },
-
-    userPicture() {
-      if (this.isAuthenticated) return this.$auth.user.picture;
-      else return "";
-    },
-
-    settingsChanged() {
-      const settings = this.settings;
-      const metadata = this.user_metadata;
-      return (
-        settings.boolean_param != metadata.boolean_param ||
-        settings.numeric_param != metadata.numeric_param ||
-        settings.string_param != metadata.string_param
-      );
-    },
+  beforeMount() {
+    if (!this.isAuthenticated) {
+      window.console.log("Isn`t authenticated, redirecting...");
+      this.$router.push("/authenticate");
+    } else if (!this.isAuthorized) {
+      window.console.log("Isn`t authorized, redirecting...");
+      this.$router.push("/authorize");
+    }
   },
 
   methods: {
+    myTest() {
+      this.$store.commit("_onCloudApiResponse", {
+        config: {
+          method: "post",
+          url: "/cloud/user/authorize",
+        },
+      });
+    },
+
+    myOnClick() {
+      this.$router.push({
+        name: "authcode",
+        params: { userId: this.phoneNumber },
+      });
+
+      // requestAuthSms(this.phoneNumber).then(() => {
+      //   window.console.log("req ok!");
+      // });
+    },
+
+    requestAuthCode() {
+      // window.console.log("request");
+      const request = {
+        url: "/cloud/user/authorize",
+        method: "post",
+        data: {
+          userId: this.phoneNumber,
+        },
+      };
+      this.$store.dispatch("requestCloudApi", request);
+    },
+
     getParamsFromUserData() {
-      const metadata = this.user_metadata;
+      const metadata = this.user.user_metadata;
       this.settings = {
         boolean_param: metadata.boolean_param,
         numeric_param: metadata.numeric_param,
@@ -142,6 +159,33 @@ export default {
     },
   },
 
+  computed: {
+    ...mapGetters(["user", "user_name", "cloud"]),
+
+    isAuthenticated() {
+      return !this.$auth.loading && this.$auth.isAuthenticated;
+    },
+
+    isAuthorized() {
+      return this.user.user_metadata.bast_token;
+    },
+
+    userPicture() {
+      if (this.isAuthenticated) return this.$auth.user.picture;
+      else return "";
+    },
+
+    settingsChanged() {
+      const settings = this.settings;
+      const metadata = this.user.user_metadata;
+      return (
+        settings.boolean_param != metadata.boolean_param ||
+        settings.numeric_param != metadata.numeric_param ||
+        settings.string_param != metadata.string_param
+      );
+    },
+  },
+
   watch: {
     user_metadata: function() {
       if (this.settingsChanged) this.getParamsFromUserData();
@@ -160,6 +204,7 @@ export default {
         numeric_param: 0,
       },
       email: "",
+      phone: "",
       // state: false,
     };
   },

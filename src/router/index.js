@@ -2,7 +2,7 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import Home from "../views/Home.vue";
 
-import { authGuard } from "../auth/authService";
+import { authenGuard } from "../auth/authService";
 import Profile from "../views/Profile.vue";
 
 // import ExternalApiView from "../views/ExternalApi.vue";
@@ -16,10 +16,21 @@ const routes = [
     component: Home,
   },
   {
+    path: "/authenticate",
+    name: "Аутентификация",
+    component: () => import("../views/Authenticate.vue"),
+  },
+  {
+    path: "/authorize",
+    name: "Авторизация",
+    component: () => import("../views/Authorize.vue"),
+    beforeEnter: authenGuard,
+  },
+  {
     path: "/profile",
     name: "Пользователь",
     component: Profile,
-    beforeEnter: authGuard,
+    beforeEnter: authenGuard,
   },
   {
     path: "/settings",

@@ -1,7 +1,24 @@
 <template>
   <div id="app">
     <app-navigation title="CLOUD::BAST" />
-    <router-view />
+    <router-view v-if="is_ready" />
+
+    <b-overlay :show="!is_ready" spinner-variant="primary" spinner-type="grow">
+      <div v-if="!is_ready" class="content">
+        <img
+          src="@/assets/logo.png"
+          alt="LOGO"
+          width="256"
+          height="256"
+          class="mb-4"
+        />
+        <h3>Cloud::BAST.</h3>
+        <p>
+          Пожалуйста, воспользуйтесь кнопкой в меню или
+          <b-link to="/profile">ссылкой на профиль пользователя</b-link>
+        </p>
+      </div>
+    </b-overlay>
 
     <!-- <b-container class="d-flex justify-content-center my-3">
       <b-button size="sm" @click="myAction">
@@ -58,6 +75,10 @@ export default {
     AppNotification,
   },
 
+  beforeMount() {
+    // this.$store.dispatch("startIntervalPeriodic");
+  },
+
   methods: {
     myAction() {
       window.console.log("DEBUG::myAction");
@@ -90,10 +111,6 @@ export default {
   },
 
   computed: {
-    isAuthenticated() {
-      return this.$auth.isAuthenticated;
-    },
-
     auth0User() {
       return this.$auth.user;
     },
@@ -103,8 +120,8 @@ export default {
     auth0User: function(user) {
       // window.console.log("auth0User", user);
 
-      if (this.isAuthenticated) {
-        this.$store.commit("setUser", user);
+      if (this.$auth.isAuthenticated) {
+        this.$store.commit("setUserData", user);
 
         const authService = this.$auth;
 
@@ -114,17 +131,18 @@ export default {
         getUserData(url, user_id).then((data) => {
           // window.console.log("data:", data);
           this.$store.commit("setUserData", data);
+          this.is_ready = true;
         });
+      } else {
+        this.is_ready = !this.$auth.loading;
       }
-    },
-
-    isAuthenticated: function(authenticated) {
-      window.console.log("isAuthenticated:", authenticated);
     },
   },
 
   data: () => {
     return {
+      is_ready: false,
+
       alertNotification: {
         visible: false,
         variant: "warning",
@@ -205,5 +223,13 @@ body {
 
 a {
   color: var(--blue);
+}
+
+.content {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  margin-top: 64px;
 }
 </style>
