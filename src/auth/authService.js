@@ -73,7 +73,6 @@ export const updateUserData = (url, user_id, metadata) => {
     )
     .then((result) => result.json())
     .then((data) => {
-      // console.log("PATCH:", data);
       return data;
     });
 };

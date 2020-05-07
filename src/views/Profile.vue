@@ -1,9 +1,26 @@
 <template>
   <div class="content">
     <div>
-      <img :src="$auth.user.picture" />
-      <h2>{{ $auth.user.name }}</h2>
-      <p>{{ $auth.user.email }}</p>
+      <img
+        height="128"
+        width="128"
+        :alt="user_picture.alt"
+        :src="user_picture.src"
+      />
+      <h2>{{ user_name }}</h2>
+      <p v-if="user_email !== ''">
+        email: <strong>{{ user_email }}</strong>
+      </p>
+      <p v-if="user_phone !== ''">
+        phone: <strong>{{ user_phone }}</strong>
+      </p>
+
+      <p v-if="mqtt.user !== ''">
+        MQTT user: <strong>{{ mqtt.user }}</strong>
+      </p>
+      <p v-if="mqtt.pass !== ''">
+        MQTT pass: <strong>{{ mqtt.pass }}</strong>
+      </p>
     </div>
 
     <!-- <div>
@@ -11,6 +28,28 @@
     </div> -->
   </div>
 </template>
+
+<script>
+import { mapGetters } from "vuex";
+
+export default {
+  computed: {
+    ...mapGetters([
+      "is_authorized",
+      "user_name",
+      "user_email",
+      "user_phone",
+      "user_picture",
+      "user_metadata",
+      "mqtt",
+    ]),
+  },
+
+  data: () => {
+    return {};
+  },
+};
+</script>
 
 <style scoped>
 .content {

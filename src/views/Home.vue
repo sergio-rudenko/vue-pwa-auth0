@@ -1,15 +1,6 @@
 <template>
   <div class="home">
-    <div class="content">
-      <div v-if="isAuthenticated">
-        <img :src="userPicture" alt="User" width="64" height="64" />
-        <p>
-          <strong>{{ user_name }}</strong>
-        </p>
-      </div>
-    </div>
-
-    <b-container v-if="isAuthenticated && isAuthorized">
+    <b-container>
       <b-form @submit="onSubmit" @reset="onReset">
         <b-form-group
           label="Строковый параметр:"
@@ -86,10 +77,10 @@ export default {
   components: {},
 
   beforeMount() {
-    if (!this.isAuthenticated) {
+    if (!this.is_authenticated) {
       window.console.log("Isn`t authenticated, redirecting...");
       this.$router.push("/authenticate");
-    } else if (!this.isAuthorized) {
+    } else if (!this.is_authorized) {
       window.console.log("Isn`t authorized, redirecting...");
       this.$router.push("/authorize");
     }
@@ -116,20 +107,8 @@ export default {
       // });
     },
 
-    requestAuthCode() {
-      // window.console.log("request");
-      const request = {
-        url: "/cloud/user/authorize",
-        method: "post",
-        data: {
-          userId: this.phoneNumber,
-        },
-      };
-      this.$store.dispatch("requestCloudApi", request);
-    },
-
     getParamsFromUserData() {
-      const metadata = this.user.user_metadata;
+      const metadata = this.user_metadata;
       this.settings = {
         boolean_param: metadata.boolean_param,
         numeric_param: metadata.numeric_param,
@@ -138,7 +117,7 @@ export default {
     },
 
     onSubmit() {
-      if (this.isAuthenticated) {
+      if (this.is_authenticated) {
         const authService = this.$auth;
         const user_id = authService.user.sub;
         const url = authService._data.auth0Client.options.audience;
@@ -149,7 +128,7 @@ export default {
 
         updateUserData(url, user_id, metadata).then((data) => {
           // window.console.log("data:", data);
-          this.$store.commit("setUserData", data);
+          this.$store.commit("setMetadata", data);
         });
       }
     },
@@ -160,24 +139,11 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["user", "user_name", "cloud"]),
-
-    isAuthenticated() {
-      return !this.$auth.loading && this.$auth.isAuthenticated;
-    },
-
-    isAuthorized() {
-      return this.user.user_metadata.bast_token;
-    },
-
-    userPicture() {
-      if (this.isAuthenticated) return this.$auth.user.picture;
-      else return "";
-    },
+    ...mapGetters(["user_metadata", "is_authenticated", "is_authorized"]),
 
     settingsChanged() {
       const settings = this.settings;
-      const metadata = this.user.user_metadata;
+      const metadata = this.user_metadata;
       return (
         settings.boolean_param != metadata.boolean_param ||
         settings.numeric_param != metadata.numeric_param ||

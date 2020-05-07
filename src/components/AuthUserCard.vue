@@ -1,6 +1,6 @@
 <template>
   <b-container class="bg-primary text-light">
-    <b-media v-if="isAuthenticated" class="px-2">
+    <b-media v-if="is_authenticated" class="px-2">
       <template v-slot:aside>
         <b-avatar
           class="my-3"
@@ -12,8 +12,8 @@
           badge-offset="2px"
           variant="primary"
           badge-variant="danger"
-          :text="userPicture === '' ? userPictureAlt : ''"
-          :src="userPicture"
+          :text="user_picture.alt"
+          :src="user_picture.src"
           rounded
         ></b-avatar>
       </template>
@@ -23,7 +23,7 @@
       >
         <div class="col-9">
           <div class="text-truncate">
-            <strong>{{ userFullName }}</strong>
+            <strong>{{ user_name }}</strong>
           </div>
         </div>
         <!-- <div class="col-2 justify-content-end mr-1">
@@ -32,26 +32,26 @@
       </div>
 
       <div
-        v-if="userEmail !== ''"
+        v-if="user_email !== ''"
         class="row no-gutters justify-content-between"
       >
         <div class="text-truncate">
-          {{ userEmail }}
+          {{ user_email }}
         </div>
       </div>
 
       <div
-        v-if="userPhone !== ''"
-        class="row no-gutters justify-content-between mb-2"
+        v-if="user_phone !== ''"
+        class="row no-gutters justify-content-between"
       >
         <div class="text-truncate">
-          {{ userPhone }}
+          {{ user_phone }}
         </div>
       </div>
     </b-media>
 
     <div class="row no-gutters py-3">
-      <b-button v-if="isAuthenticated" @click="logout" variant="warning" block>
+      <b-button v-if="is_authenticated" @click="logout" variant="warning" block>
         Выйти из аккаунта
       </b-button>
       <b-button v-else @click="login" variant="success" block>
@@ -83,56 +83,16 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["user"]),
-
-    isAuthenticated() {
-      return this.$auth.isAuthenticated;
-    },
-
-    userPicture() {
-      var result = "";
-      const user = this.user;
-      if (user.picture) {
-        result = user.picture;
-      }
-      return result;
-    },
-
-    userPictureAlt() {
-      const user = this.user;
-      const n = user.given_name.split("")[0] || ".";
-      const f = user.family_name.split("")[0] || ".";
-
-      return n.toUpperCase() + f.toUpperCase();
-    },
+    ...mapGetters([
+      "is_authenticated",
+      "user_name",
+      "user_email",
+      "user_phone",
+      "user_picture",
+    ]),
 
     userBadge() {
       return null;
-    },
-
-    userFullName() {
-      var result = "";
-      const user = this.user;
-      if (user.given_name) result += user.given_name;
-      if (user.family_name) result += " " + user.family_name;
-
-      if (result === "" && user.nickname) {
-        result += user.nickname;
-      }
-      return result;
-    },
-
-    userEmail() {
-      var result = "";
-      const user = this.user;
-      if (user.email_verified) {
-        result = user.email;
-      }
-      return result;
-    },
-
-    userPhone() {
-      return "";
     },
   },
 

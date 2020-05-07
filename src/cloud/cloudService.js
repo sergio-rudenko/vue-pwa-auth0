@@ -1,5 +1,5 @@
 const axios = require("axios").default;
-const baseURL = "https://sa100cloud.com";
+const baseURL = "https://sa100cloud.com"; //FIXME!
 
 const _requestApi = (req) => {
   window.console.log("_requestApi req:", req);
@@ -77,6 +77,17 @@ export const confirmCode = (phone, code) => {
       userId: phone,
       code: code,
     },
+  };
+
+  return _requestApi(request);
+};
+
+export const getCloudData = (token) => {
+  // window.console.log("request");
+  const request = {
+    url: "/cloud/user/user",
+    method: "get",
+    token: token,
   };
 
   return _requestApi(request);

@@ -1,10 +1,10 @@
 <template>
   <div id="app">
     <app-navigation title="CLOUD::BAST" />
-    <router-view v-if="is_ready" />
+    <router-view v-if="isReady" />
 
-    <b-overlay :show="!is_ready" spinner-variant="primary" spinner-type="grow">
-      <div v-if="!is_ready" class="content">
+    <b-overlay :show="!isReady" spinner-variant="primary" spinner-type="grow">
+      <div v-if="!isReady" class="content">
         <img
           src="@/assets/logo.png"
           alt="LOGO"
@@ -65,7 +65,11 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+
 import { getUserData } from "@/auth/authService";
+import { getCloudData } from "@/cloud/cloudService";
+
 import AppNavigation from "@/components/AppNavigation.vue";
 import AppNotification from "@/components/AppNotification.vue";
 
@@ -111,38 +115,80 @@ export default {
   },
 
   computed: {
+    ...mapGetters(["application_fsm"]),
+
     auth0User() {
       return this.$auth.user;
+    },
+
+    isReady() {
+      const FSM = this.application_fsm.states;
+      const fsm_state = this.application_fsm.fsm;
+      window.console.log("FSM:", fsm_state);
+
+      return (
+        fsm_state == FSM.NOT.AUTHENTIFICATED ||
+        fsm_state == FSM.NOT.AUTHORIZED ||
+        fsm_state == FSM.INIT.CONNECTION
+      );
     },
   },
 
   watch: {
     auth0User: function(user) {
       // window.console.log("auth0User", user);
-
       if (this.$auth.isAuthenticated) {
-        this.$store.commit("setUserData", user);
-
-        const authService = this.$auth;
-
-        const user_id = authService.user.sub;
-        const url = authService._data.auth0Client.options.audience;
-
-        getUserData(url, user_id).then((data) => {
-          // window.console.log("data:", data);
-          this.$store.commit("setUserData", data);
-          this.is_ready = true;
-        });
+        this.$store.commit("setAuthenticated", user);
       } else {
-        this.is_ready = !this.$auth.loading;
+        this.$store.commit("setAuthenticated", {
+          authenticated: false,
+        });
       }
+    },
+
+    application_fsm: function(value) {
+      const FSM = value.states;
+
+      switch (value.fsm) {
+        case FSM.INIT.REQUEST_USER_DATA:
+          {
+            const authService = this.$auth;
+            const user_id = authService.user.sub;
+            const url = authService._data.auth0Client.options.audience;
+
+            getUserData(url, user_id)
+              .then((data) => {
+                this.$store.commit("setMetadata", data);
+              })
+              .catch((err) => window.console.log("ERROR:", err.response)); //FIXME!
+          }
+          break;
+
+        case FSM.INIT.AUTHORIZATION:
+          {
+            const metadata = this.$store.state.user.user_metadata;
+            const token = metadata.bast_token;
+
+            getCloudData(token)
+              .then((response) => {
+                this.$store.commit("setCloudData", response.data);
+              })
+              .catch((err) => window.console.log("ERROR:", err.response)); //FIXME!
+          }
+          break;
+
+        case FSM.INIT.CONNECTION:
+          {
+            window.console.log("MQTT...");
+          }
+          break;
+      }
+      // window.console.log("state:", state);
     },
   },
 
   data: () => {
     return {
-      is_ready: false,
-
       alertNotification: {
         visible: false,
         variant: "warning",

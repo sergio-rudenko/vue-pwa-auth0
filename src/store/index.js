@@ -6,10 +6,24 @@ const axios = require("axios").default;
 var _timer = null;
 var _uptime = 0;
 
-const _updateObject = function(source, destination) {
-  for (var key in source) {
-    destination[key] = source[key];
+const _updateObject = function(dst, src) {
+  for (var key in src) {
+    dst[key] = src[key];
   }
+};
+
+const FSM = {
+  INIT: {
+    AUTHENTIFICATION: "authentification",
+    REQUEST_USER_DATA: "getting user data",
+    AUTHORIZATION: "authorization",
+    CONNECTION: "connection",
+  },
+  NOT: {
+    AUTHENTIFICATED: "not authentificated",
+    AUTHORIZED: "not authorized",
+    CONNECTED: "not connected",
+  },
 };
 
 Vue.use(Vuex);
@@ -17,8 +31,12 @@ export default new Vuex.Store({
   strict: true,
 
   state: {
-    debug: true,
-    version: "0.0.7",
+    application: {
+      debug: true,
+      version: "0.0.8",
+
+      fsm_state: FSM.INIT.AUTHENTIFICATION,
+    },
 
     user: {
       picture: "",
@@ -32,6 +50,11 @@ export default new Vuex.Store({
       app_metadata: {},
       user_metadata: {
         bast_token: "",
+
+        // test data
+        boolean_param: "",
+        numeric_param: "",
+        string_param: "",
       },
     },
 
@@ -39,17 +62,49 @@ export default new Vuex.Store({
       name: "", // имя пользователя
       phone: "", // телефон в международном формате
       email: "", // электронная почта
+
       mqttClientId: "", // clientId для подключения к MQTT-брокеру
       mqttUsername: "", // username для авторизации на MQTT-брокере, 16 символов
       mqttPassword: "", // пароль для авторизации на MQTT-брокере, 16 символов
+
+      mqtt_url: "https://sa100cloud.com/wss",
+      mqtt_is_connected: false,
+    },
+
+    mqtt: {
+      connected: false,
     },
   },
 
   getters: {
-    version: (state) => {
-      return state.version;
+    debug: (state) => {
+      return state.application.debug;
     },
 
+    version: (state) => {
+      return state.application.version;
+    },
+
+    // STATE -----------------------------------------------------------------
+    application_fsm: (state) => {
+      return { fsm: state.application.fsm_state, states: FSM };
+    },
+
+    is_authenticated: (state) => {
+      return (
+        state.application.fsm_state != FSM.INIT.AUTHENTIFICATION &&
+        state.application.fsm_state != FSM.NOT.AUTHENTIFICATED
+      );
+    },
+
+    is_authorized: (state) => {
+      return (
+        state.application.fsm_state != FSM.INIT.AUTHORIZATION &&
+        state.application.fsm_state != FSM.NOT.AUTHORIZED
+      );
+    },
+
+    // USER ------------------------------------------------------------------
     user: (state) => {
       return state.user;
     },
@@ -76,6 +131,22 @@ export default new Vuex.Store({
       return user.email_verified ? user.email : "";
     },
 
+    user_phone: (state) => {
+      const user = state.user;
+      return user.phone_verified ? user.phone : "";
+    },
+
+    user_picture: (state) => {
+      const user = state.user;
+      const g = user.given_name.split("")[0] || ".";
+      const f = user.family_name.split("")[0] || ".";
+
+      return {
+        src: user.picture,
+        alt: g.toUpperCase() + f.toUpperCase(),
+      };
+    },
+
     app_metadata: (state) => {
       return state.user.app_metadata;
     },
@@ -84,20 +155,82 @@ export default new Vuex.Store({
       return state.user.user_metadata;
     },
 
-    cloud: (state) => {
-      return state.cloud;
+    // CLOUD -----------------------------------------------------------------
+    mqtt: (state) => {
+      return {
+        is_connected: state.cloud.mqtt_is_connected,
+        url: state.cloud.mqtt_url,
+
+        user: state.cloud.mqttUsername,
+        pass: state.cloud.mqttPassword,
+      };
     },
   },
 
   mutations: {
-    setUserData(state, data) {
-      if (state.debug) window.console.log("setUserData:", data);
-      _updateObject(data, state.user);
+    setAuthenticated(state, data) {
+      if (state.application.debug)
+        window.console.log("setAuthenticated:", data);
+
+      if ("authenticated" in data && data.authenticated == false) {
+        window.console.log("NOT Authentivated!");
+        state.application.fsm_state = FSM.NOT.AUTHENTIFICATED;
+      } else {
+        _updateObject(state.user, data);
+        state.application.fsm_state = FSM.INIT.REQUEST_USER_DATA;
+      }
+    },
+
+    setMetadata(state, data) {
+      if ("app_metadata" in data) {
+        if (state.application.debug) {
+          window.console.log("setMetadata, app:", data.app_metadata);
+        }
+        _updateObject(state.user.app_metadata, data.app_metadata);
+      }
+
+      if ("user_metadata" in data) {
+        if (state.application.debug) {
+          window.console.log("setMetadata, user:", data.user_metadata);
+        }
+
+        const bast_token = state.user.user_metadata.bast_token;
+        if (data.user_metadata.bast_token != bast_token) {
+          state.application.fsm_state = FSM.INIT.AUTHORIZATION;
+        }
+
+        if (data.user_metadata.bast_token == "") {
+          window.console.log("NOT Authorized!");
+          state.application.fsm_state = FSM.NOT.AUTHORIZED;
+        }
+
+        _updateObject(state.user.user_metadata, data.user_metadata);
+      }
     },
 
     setCloudData(state, data) {
-      if (state.debug) window.console.log("setCloudData:", data);
-      _updateObject(data, state.cloud);
+      if (state.application.debug) {
+        window.console.log("setCloudData:", data);
+      }
+      _updateObject(state.cloud, data);
+
+      if (state.cloud.email) {
+        if (state.application.debug)
+          window.console.log("email updated:", state.cloud.email);
+
+        state.user.email = state.cloud.email;
+        state.user.email_verified = true;
+      }
+
+      if (state.cloud.phone) {
+        if (state.application.debug)
+          window.console.log("phone updated:", state.cloud.phone);
+
+        state.user.phone = state.cloud.phone;
+        state.user.phone_verified = true;
+      }
+
+      state.application.fsm_state = FSM.INIT.CONNECTION;
     },
   },
 
