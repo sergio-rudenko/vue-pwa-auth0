@@ -225,7 +225,7 @@ export default {
           title: "Настройки",
           icon: "gear",
           path: "/settings",
-          disabled: true,
+          disabled: false,
           divider: true,
         },
         {

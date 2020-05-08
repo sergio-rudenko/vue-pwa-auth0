@@ -36,6 +36,7 @@ const routes = [
     path: "/settings",
     name: "Настройки",
     component: () => import("../views/Settings.vue"),
+    beforeEnter: authenGuard,
   },
 
   {

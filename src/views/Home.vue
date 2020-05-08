@@ -1,58 +1,56 @@
 <template>
   <div class="home">
     <b-container>
-      <b-form @submit="onSubmit" @reset="onReset">
+      <b-form>
+        <P class="pt-3 mb-2">Телефон:</P>
+        <b-input-group class="mb-3">
+          <template v-slot:prepend>
+            <!-- <b-dropdown id="dropdown-left" text="RU" v-model="metadata">
+              <b-dropdown-item>+7</b-dropdown-item>
+              <b-dropdown-item>+380</b-dropdown-item>
+            </b-dropdown> -->
+            <b-form-select
+              :options="countries"
+              text-field="value.prefix"
+              v-model="phone_metadata"
+            />
+          </template>
+          <b-form-input
+            v-model="phone_data"
+            :state="phoneNumber !== null"
+            :formatter="formatPhoneData"
+            lazy-formatter
+          ></b-form-input>
+        </b-input-group>
+
         <b-form-group
-          label="Строковый параметр:"
-          description="Параметры синхронизируются для пользователей с одинаковым адресом электронной почты"
+          label="Текст:"
+          description="Короткое сообщение для другого пользователя"
           style="border-bottom: 1px solid rgba(0, 0, 0, 0.125);"
           class="pb-3"
         >
           <b-form-input
-            v-model="settings.string_param"
+            v-model="message"
             type="text"
             required
             placeholder="Значение не задано..."
+            :state="message !== ''"
           ></b-form-input>
         </b-form-group>
-
-        <b-form-group
-          style="border-bottom: 1px solid rgba(0, 0, 0, 0.125);"
-          class="pb-3"
-        >
-          <b-form-checkbox switch v-model="settings.boolean_param">
-            Бинарный параметр
-          </b-form-checkbox>
-        </b-form-group>
-
-        <div
-          style="border-bottom: 1px solid rgba(0, 0, 0, 0.125);"
-          class="pb-3"
-        >
-          <label for="range-1">Числовой параметр (min/max)</label>
-          <b-form-input
-            id="range-1"
-            v-model="settings.numeric_param"
-            type="range"
-            min="0"
-            max="128"
-          ></b-form-input>
-          <div class="mt-2">Значение: {{ settings.numeric_param }}</div>
-        </div>
 
         <div class="py-4">
           <b-button
             class="mr-2"
             variant="primary"
-            :disabled="!settingsChanged"
+            :disabled="phoneNumber === null || message === ''"
             @click="onSubmit"
           >
-            Сохранить
+            Отправить
           </b-button>
           <b-button
             class="mr-2"
             variant="danger"
-            :disabled="!settingsChanged"
+            :disabled="false"
             @click="onReset"
           >
             Сбросить
@@ -60,118 +58,83 @@
         </div>
       </b-form>
     </b-container>
-
-    <!-- <div>
-      <pre>{{ JSON.stringify($auth.user.data, null, 2) }}</pre>
-    </div> -->
   </div>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
 
-import { updateUserData } from "@/auth/authService";
+// import { updateUserData } from "@/auth/authService";
 
 export default {
   name: "Home",
   components: {},
 
-  beforeMount() {
-    if (!this.is_authenticated) {
-      window.console.log("Isn`t authenticated, redirecting...");
-      this.$router.push("/authenticate");
-    } else if (!this.is_authorized) {
-      window.console.log("Isn`t authorized, redirecting...");
-      this.$router.push("/authorize");
-    }
-  },
+  beforeMount() {},
 
   methods: {
-    myTest() {
-      this.$store.commit("_onCloudApiResponse", {
-        config: {
-          method: "post",
-          url: "/cloud/user/authorize",
-        },
-      });
-    },
-
-    myOnClick() {
-      this.$router.push({
-        name: "authcode",
-        params: { userId: this.phoneNumber },
-      });
-
-      // requestAuthSms(this.phoneNumber).then(() => {
-      //   window.console.log("req ok!");
-      // });
-    },
-
-    getParamsFromUserData() {
-      const metadata = this.user_metadata;
-      this.settings = {
-        boolean_param: metadata.boolean_param,
-        numeric_param: metadata.numeric_param,
-        string_param: metadata.string_param,
-      };
-    },
-
     onSubmit() {
-      if (this.is_authenticated) {
-        const authService = this.$auth;
-        const user_id = authService.user.sub;
-        const url = authService._data.auth0Client.options.audience;
-
-        // clone metadata and update with changed values
-        var metadata = { ...this.$store.state.user.user_metadata };
-        for (var key in this.settings) metadata[key] = this.settings[key];
-
-        updateUserData(url, user_id, metadata).then((data) => {
-          // window.console.log("data:", data);
-          this.$store.commit("setMetadata", data);
-        });
-      }
+      window.console.log("onSubmit");
     },
 
     onReset() {
-      this.getParamsFromUserData();
+      window.console.log("onReset");
+    },
+
+    formatPhoneData(value) {
+      var result = value;
+
+      if (this.phoneNumber) {
+        const re = this.phone_metadata.re;
+        const parts = value.match(re);
+        if (parts) {
+          result = `(${parts[1]}) ${parts[2]} ${parts[3]}-${parts[4]}`;
+        }
+      }
+      return result;
     },
   },
 
   computed: {
-    ...mapGetters(["user_metadata", "is_authenticated", "is_authorized"]),
+    ...mapGetters(["is_authenticated", "is_authorized"]),
 
-    settingsChanged() {
-      const settings = this.settings;
-      const metadata = this.user_metadata;
-      return (
-        settings.boolean_param != metadata.boolean_param ||
-        settings.numeric_param != metadata.numeric_param ||
-        settings.string_param != metadata.string_param
-      );
+    phoneNumber() {
+      var result = "";
+      const re = this.phone_metadata.re;
+      const parts = this.phone_data.match(re);
+
+      if (parts) {
+        for (var i = 1; i < parts.length; i++) {
+          result += parts[i];
+        }
+        result = this.phone_metadata.prefix + result;
+      }
+      return result ? result : null;
     },
   },
 
-  watch: {
-    user_metadata: function() {
-      if (this.settingsChanged) this.getParamsFromUserData();
-    },
-  },
-
-  created() {
-    this.getParamsFromUserData();
-  },
+  watch: {},
 
   data: () => {
     return {
-      settings: {
-        boolean_param: false,
-        string_param: "",
-        numeric_param: 0,
-      },
-      email: "",
-      phone: "",
+      message: "",
+
+      countries: [
+        {
+          text: "Россия",
+          value: {
+            prefix: "+7",
+            re: /^[(]?([0-9]{3})[)]?[-\s.]?([0-9]{3})[-\s.]?([0-9]{2})[-\s.]?([0-9]{2})$/i,
+          },
+        },
+        { text: "Украина", value: { prefix: "+380", re: /^\d{10}$/ } },
+      ],
       // state: false,
+      phone_data: "",
+      phone_metadata: {
+        prefix: "+7",
+        re: /^[(]?([0-9]{3})[)]?[-\s.]?([0-9]{3})[-\s.]?([0-9]{2})[-\s.]?([0-9]{2})$/i,
+      },
     };
   },
 };

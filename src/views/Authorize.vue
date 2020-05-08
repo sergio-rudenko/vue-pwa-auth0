@@ -109,6 +109,7 @@ export default {
           const url = authService._data.auth0Client.options.audience;
 
           updateUserData(url, user_id, {
+            // save authorization token
             bast_token: result.headers["token"],
           }).then((data) => {
             // window.console.log("data:", data);

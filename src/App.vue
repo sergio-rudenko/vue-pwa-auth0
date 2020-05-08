@@ -70,6 +70,13 @@ import { mapGetters } from "vuex";
 import { getUserData } from "@/auth/authService";
 import { getCloudData } from "@/cloud/cloudService";
 
+import {
+  mqttConnect,
+  mqttHeartbeat,
+  mqttSubscribe,
+  // mqttUnsubscribe,
+} from "@/mqtt/mqttService";
+
 import AppNavigation from "@/components/AppNavigation.vue";
 import AppNotification from "@/components/AppNotification.vue";
 
@@ -115,7 +122,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["application_fsm"]),
+    ...mapGetters(["application_fsm", "user_phone", "mqtt_message"]),
 
     auth0User() {
       return this.$auth.user;
@@ -124,12 +131,12 @@ export default {
     isReady() {
       const FSM = this.application_fsm.states;
       const fsm_state = this.application_fsm.fsm;
-      window.console.log("FSM:", fsm_state);
+      // window.console.log("FSM:", fsm_state);
 
       return (
-        fsm_state == FSM.NOT.AUTHENTIFICATED ||
-        fsm_state == FSM.NOT.AUTHORIZED ||
-        fsm_state == FSM.INIT.CONNECTION
+        fsm_state != FSM.INIT.AUTHENTIFICATION &&
+        fsm_state != FSM.INIT.REQUEST_USER_DATA &&
+        fsm_state != FSM.INIT.AUTHORIZATION
       );
     },
   },
@@ -179,11 +186,50 @@ export default {
 
         case FSM.INIT.CONNECTION:
           {
-            window.console.log("MQTT...");
+            const store = this.$store;
+            const mqtt_instance = store.state.cloud.mqtt_instance;
+
+            if (mqtt_instance === null) {
+              mqttConnect(store);
+              setInterval(() => {
+                /* Heartbeat/Reconnect */
+                const user_id = btoa(this.user_phone);
+                mqttHeartbeat(store, user_id);
+              }, 5000); //FOXME: interval
+            }
+          }
+          break;
+
+        case FSM.CONNECTED:
+          {
+            // 1. subscribe
+            // 3. device list
+            const store = this.$store;
+            const mqtt_instance = store.state.cloud.mqtt_instance;
+
+            if (mqtt_instance !== null) {
+              if (mqtt_instance.isConnected()) {
+                const user_id = btoa(this.user_phone);
+                const topic = "status/" + user_id + "/msg/#";
+                mqttSubscribe(mqtt_instance, topic);
+              } else {
+                window.console.log(
+                  "ERROR, is not connected:",
+                  mqtt_instance.isConnected()
+                );
+              }
+            } else {
+              window.console.log("ERROR, no instance:", mqtt_instance);
+            }
           }
           break;
       }
       // window.console.log("state:", state);
+    },
+
+    mqtt_message: function(msg) {
+      window.console.log("msg.topic:", msg.topic);
+      window.console.log("msg.payload:", msg.payload);
     },
   },
 
