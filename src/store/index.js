@@ -34,7 +34,7 @@ export default new Vuex.Store({
   state: {
     application: {
       debug: true,
-      version: "0.0.9 rc1",
+      version: "0.0.9 rc2",
 
       fsm_state: FSM.INIT.AUTHENTIFICATION,
     },
@@ -205,7 +205,10 @@ export default new Vuex.Store({
           state.application.fsm_state = FSM.INIT.AUTHORIZATION;
         }
 
-        if (data.user_metadata.bast_token == "") {
+        if (
+          !("bast_token" in data.user_metadata) ||
+          data.user_metadata.bast_token == ""
+        ) {
           window.console.log("NOT Authorized!");
           state.application.fsm_state = FSM.NOT.AUTHORIZED;
         }

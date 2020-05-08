@@ -70,9 +70,21 @@ export default {
   name: "Home",
   components: {},
 
-  beforeMount() {},
+  beforeMount() {
+    this.checkRedirect();
+  },
 
   methods: {
+    checkRedirect() {
+      if (!this.is_authenticated) {
+        window.console.log("Isn`t authenticated, redirecting...");
+        this.$router.push("/authenticate");
+      } else if (!this.is_authorized) {
+        window.console.log("Isn`t authorized, redirecting...");
+        this.$router.push("/authorize");
+      }
+    },
+
     onSubmit() {
       window.console.log("onSubmit");
     },
@@ -113,7 +125,15 @@ export default {
     },
   },
 
-  watch: {},
+  watch: {
+    is_authenticated: function(value) {
+      if (!value) this.checkRedirect();
+    },
+
+    is_authorized: function(value) {
+      if (!value) this.checkRedirect();
+    },
+  },
 
   data: () => {
     return {

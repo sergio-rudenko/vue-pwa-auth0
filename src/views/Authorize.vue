@@ -136,15 +136,13 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["user", "user_name", "user_email"]),
-
-    isAuthenticated() {
-      return this.$auth.isAuthenticated;
-    },
-
-    isAuthorized() {
-      return this.user.user_metadata.bast_token;
-    },
+    ...mapGetters([
+      "is_authenticated",
+      "is_authorized",
+      "user_name",
+      "user_email",
+      "user",
+    ]),
 
     timeoutHumanReadable() {
       var result = "";
@@ -160,11 +158,11 @@ export default {
   },
 
   watch: {
-    isAuthenticated: function(value) {
+    is_authenticated: function(value) {
       if (!value) this.$router.push("/");
     },
 
-    isAuthorized: function(value) {
+    is_authorized: function(value) {
       if (value) this.$router.push("/");
     },
   },
