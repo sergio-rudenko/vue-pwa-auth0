@@ -16,29 +16,42 @@ const _client_id = [...Array(16)]
 /**
  * connect
  */
-export const mqttConnect = (store) => {
-  const cloud = store.state.cloud;
+export const mqttConnect = (store, on_message) => {
+  const debug = store.state.application.debug;
+  const mqtt = store.state.cloud.mqtt;
 
   if (
     !isUndefined(window.Paho.MQTT.Client) &&
-    cloud.mqttUsername != "" &&
-    cloud.mqttPassword != ""
+    mqtt.username != "" &&
+    mqtt.password != ""
   ) {
-    window.console.log(
-      "MQTT: connecting to '" +
-        cloud.mqtt_host +
-        cloud.mqtt_path +
-        "' as " +
-        cloud.mqttUsername +
-        " , id:" +
+    if (debug) {
+      window.console.log(
+        "MQTT: connecting to '" +
+          mqtt.host +
+          mqtt.path +
+          "' as " +
+          mqtt.username +
+          " , id:" +
+          _client_id
+      );
+    }
+
+    store.commit(
+      "mqttInstance",
+      new window.Paho.MQTT.Client(
+        mqtt.host || MQTT.HOST,
+        mqtt.port || MQTT.PORT,
+        mqtt.path || MQTT.PATH,
         _client_id
+      )
     );
 
-    var connectOptions = {
+    mqtt.instance.connect({
       timeout: 300,
       useSSL: true,
-      userName: cloud.mqttUsername,
-      password: cloud.mqttPassword,
+      userName: mqtt.username,
+      password: mqtt.password,
       cleanSession: false,
       keepAliveInterval: 60,
 
@@ -48,56 +61,39 @@ export const mqttConnect = (store) => {
       onFailure: () => {
         store.commit("MQTT_ONERROR");
       },
-    };
+    });
 
-    store.commit(
-      "mqttInstance",
-      new window.Paho.MQTT.Client(
-        cloud.mqtt_host || MQTT.HOST,
-        cloud.mqtt_port || MQTT.PORT,
-        cloud.mqtt_path || MQTT.PATH,
-        _client_id
-      )
-    );
-
-    cloud.mqtt_instance.connect(connectOptions);
-
-    cloud.mqtt_instance.onMessageArrived = (msg) => {
-      store.commit("MQTT_ONMESSAGE", msg);
-    };
-
-    cloud.mqtt_instance.onConnectionLost = (res) => {
+    mqtt.instance.onConnectionLost = (res) => {
       store.commit("MQTT_RECONNECT", res);
-      // setTimeout(() => {
-      //     window.console.log('MQTT: Reconnect attempt');
-      //     this.dispatch('mqttConnect');
-      // }, 5000);
+    };
+
+    mqtt.instance.onMessageArrived = (msg) => {
+      // store.dispatch("async_MQTT_ONMESSAGE", msg);
+      //store.commit("MQTT_ONMESSAGE", msg);
+      on_message(msg);
     };
   } else {
-    window.console.log("mqttConnect: ERROR!", {
-      user: cloud.mqttUsername,
-      pass: cloud.mqttPassword,
-    });
+    window.console.log("mqttConnect: ERROR!", mqtt);
   }
 };
 
-export const mqttSubscribe = (instance, filter) => {
-  instance.subscribe(filter, {
-    onSuccess: () =>
-      window.console.log("subscribe to '" + filter + "': SUCCESS"),
-    onFailure: () =>
-      window.console.log("subscribe to '" + filter + "': FAILED!"),
-  });
-};
+// export const mqttSubscribe = (instance, filter) => {
+//   instance.subscribe(filter, {
+//     onSuccess: () =>
+//       window.console.log("subscribe to '" + filter + "': SUCCESS"),
+//     onFailure: () =>
+//       window.console.log("subscribe to '" + filter + "': FAILED!"),
+//   });
+// };
 
-export const mqttUnsubscribe = (instance, filter) => {
-  instance.subscribe(filter, {
-    onSuccess: () =>
-      window.console.log("unsubscribe from '" + filter + "': SUCCESS"),
-    onFailure: () =>
-      window.console.log("unsubscribe from '" + filter + "': FAILED!"),
-  });
-};
+// export const mqttUnsubscribe = (instance, filter) => {
+//   instance.subscribe(filter, {
+//     onSuccess: () =>
+//       window.console.log("unsubscribe from '" + filter + "': SUCCESS"),
+//     onFailure: () =>
+//       window.console.log("unsubscribe from '" + filter + "': FAILED!"),
+//   });
+// };
 
 export const mqttSendMessage = (instance, data) => {
   var msg = new window.Paho.MQTT.Message(data.payload);
@@ -110,7 +106,7 @@ export const mqttSendMessage = (instance, data) => {
 };
 
 export const mqttHeartbeat = (store, user_id) => {
-  const instance = store.state.cloud.mqtt_instance;
+  const instance = store.state.cloud.mqtt.instance;
   if (instance != null && instance.isConnected()) {
     mqttSendMessage(instance, {
       topic: "status/" + user_id + "/" + _client_id,

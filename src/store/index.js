@@ -34,7 +34,7 @@ export default new Vuex.Store({
   state: {
     application: {
       debug: true,
-      version: "0.0.9 rc2",
+      version: "0.1.0 /rc1/",
 
       fsm_state: FSM.INIT.AUTHENTIFICATION,
     },
@@ -50,7 +50,9 @@ export default new Vuex.Store({
       phone_verified: false,
       app_metadata: {},
       user_metadata: {
-        bast_token: "",
+        bast_token: "", // LK Token
+        jrnl_token: "", // Journalize service Token
+        fwdb_token: "", // FirmwaareUpdate service Token
 
         // test data
         boolean_param: "",
@@ -60,26 +62,29 @@ export default new Vuex.Store({
     },
 
     cloud: {
-      name: "", // имя пользователя
-      phone: "", // телефон в международном формате
-      email: "", // электронная почта
+      user: {
+        name: "", // имя пользователя
+        phone: "", // телефон в международном формате
+        email: "", // электронная почта
+      },
 
-      mqttClientId: "", // clientId для подключения к MQTT-брокеру
-      mqttUsername: "", // username для авторизации на MQTT-брокере, 16 символов
-      mqttPassword: "", // пароль для авторизации на MQTT-брокере, 16 символов
+      mqtt: {
+        client_id: "", // clientId для подключения к MQTT-брокеру
+        username: "", // username для авторизации на MQTT-брокере, 16 символов
+        password: "", // пароль для авторизации на MQTT-брокере, 16 символов
 
-      mqtt_host: "sa100cloud.com",
-      mqtt_path: "/wss",
-      mqtt_port: 443,
+        host: "sa100cloud.com",
+        path: "/wss",
+        port: 443,
 
-      mqtt_instance: null,
-      mqtt_message: {},
-    },
+        instance: null,
+        is_connected: false,
 
-    deviceList: [],
-    currentDevice: {
-      devId: null,
-      type: null,
+        message: {},
+      },
+
+      devices: [],
+      current_device_index: -1,
     },
   },
 
@@ -167,8 +172,20 @@ export default new Vuex.Store({
       return state.cloud;
     },
 
+    devices: (state) => {
+      return state.cloud.devices;
+    },
+
+    mqtt: (state) => {
+      return state.cloud.mqtt;
+    },
+
+    is_mqtt_connected: (state) => {
+      return state.cloud.mqtt.is_connected;
+    },
+
     mqtt_message: (state) => {
-      return state.cloud.mqtt_message;
+      return state.cloud.mqtt.message;
     },
   },
 
@@ -217,27 +234,34 @@ export default new Vuex.Store({
       }
     },
 
-    setCloudData(state, data) {
+    setCloudUserData(state, data) {
       if (state.application.debug) {
         window.console.log("setCloudData:", data);
       }
-      _updateObject(state.cloud, data);
+      const cloud = state.cloud;
+      cloud.user.name = data.name || "anonymous";
 
-      if (state.cloud.email) {
-        if (state.application.debug)
-          window.console.log("email updated:", state.cloud.email);
-
-        state.user.email = state.cloud.email;
+      if ("email" in data && data.email !== "") {
+        cloud.user.email = data.email;
+        state.user.email = data.email;
         state.user.email_verified = true;
-      }
 
-      if (state.cloud.phone) {
         if (state.application.debug)
-          window.console.log("phone updated:", state.cloud.phone);
-
-        state.user.phone = state.cloud.phone;
-        state.user.phone_verified = true;
+          window.console.log("email updated:", state.user.email);
       }
+      if ("phone" in data && data.phone !== "") {
+        cloud.user.phone = data.phone;
+        state.user.phone = data.phone;
+        state.user.phone_verified = true;
+
+        if (state.application.debug)
+          window.console.log("phone updated:", state.user.phone);
+      }
+
+      // mqtt credentials
+      cloud.mqtt.client_id = data.mqttClientId;
+      cloud.mqtt.username = data.mqttUsername;
+      cloud.mqtt.password = data.mqttPassword;
 
       state.application.fsm_state = FSM.INIT.CONNECTION;
     },
@@ -247,13 +271,34 @@ export default new Vuex.Store({
       if (state.application.debug) {
         window.console.log("mqttinstance:", data);
       }
-      state.cloud.mqtt_instance = data;
+      state.cloud.mqtt.instance = data;
+    },
+
+    mqttSubscribe(state, topic) {
+      const instance = state.cloud.mqtt.instance;
+      instance.subscribe(topic, {
+        onSuccess: () =>
+          window.console.log(`MQTT: subscribe to '${topic}': SUCCESS`),
+        onFailure: () =>
+          window.console.log(`MQTT: subscribe to '${topic}': FAILED!`),
+      });
+    },
+
+    mqttUnsubscribe(state, topic) {
+      const instance = state.cloud.mqtt.instance;
+      instance.unsubscribe(topic, {
+        onSuccess: () =>
+          window.console.log(`MQTT: unsubscribe from '${topic}': SUCCESS`),
+        onFailure: () =>
+          window.console.log(`MQTT: unsubscribe from '${topic}': FAILED!`),
+      });
     },
 
     MQTT_ONOPEN(state) {
       if (state.application.debug) {
         window.console.log("MQTT_ONOPEN");
       }
+      state.cloud.mqtt.is_connected = true;
       state.application.fsm_state = FSM.CONNECTED;
     },
 
@@ -261,6 +306,7 @@ export default new Vuex.Store({
       if (state.application.debug) {
         window.console.log("MQTT_ONERROR");
       }
+      state.cloud.mqtt.is_connected = false;
       state.application.fsm_state = FSM.DISCONNECTED;
     },
 
@@ -268,84 +314,59 @@ export default new Vuex.Store({
       if (state.application.debug) {
         window.console.log("MQTT_RECONNECT", event);
       }
+      state.cloud.mqtt.is_connected = false;
       state.application.fsm_state = FSM.DISCONNECTED;
     },
 
-    MQTT_ONMESSAGE(state, message) {
-      //state.mqtt.message = message;
-      //const result = message.destinationName.match(/^(.+)\/(.+)\/(.+)/);
-      Vue.set(state.cloud, "mqtt_message", {
-        topic: message.destinationName,
-        payload: message.payloadString,
-      });
+    // MQTT_ONMESSAGE(state, message) {
+    //   if (state.application.debug) {
+    //     window.console.log("MQTT_ONMESSAGE", message);
+    //     // window.console.log("message.topic:", message.topic);
+    //     // window.console.log("message.payload:", message.payload);
+    //   }
 
-      const spl = message.destinationName.split("/", 4);
-      //window.console.log("spl >>> ", spl);
-
-      if (spl.length >= 3) {
-        if (spl[2] === "status") {
-          this.commit("setDeviceStatus", {
-            type: spl[0],
-            devId: spl[1],
-            status: JSON.parse(state.mqtt.message.payload),
-          });
-        }
-
-        if (spl[2] === "data") {
-          // for (let k = 0; k < state.deviceList.length; k++) {
-          //     if (state.deviceList[k].type == state.mqtt.message.type &&
-          //         state.deviceList[k].devId == state.mqtt.message.devId) {
-
-          //         //                    if (state.deviceList[k].data != data.data) {
-          //         //state.deviceList[k].data = state.mqtt.message.payload;
-          //         Vue.set(state.deviceList[k], 'data', state.mqtt.message.payload);
-          //         window.console.log('data:', state.deviceList[k].data);
-          //         //                  }
-          //     }
-          // }
-
-          // window.console.log('data:', state.mqtt.message.payload);
-          this.commit("setDeviceData", {
-            type: spl[0],
-            devId: spl[1],
-            value: JSON.parse(message.payloadString),
-          });
-        }
-      } else {
-        window.console.log(
-          "ERROR! topic:'" +
-            message.destinationName +
-            "', payload: '" +
-            message.payloadString +
-            "'"
-        );
-      }
-    },
+    //   state.cloud.mqtt.message = {
+    //     ...state.cloud.mqtt.message,
+    //     topic: message.destinationName,
+    //     payload: message.payloadString,
+    //   };
+    // },
 
     // DEVICE ----------------------------------------------------------------
+    appendCloudUserDevice(state, data) {
+      const list = state.cloud.devices;
+      list.push(data);
+
+      const topic = data.type + "/" + data.devId + "/+"; // NOTE!: only one level
+      this.commit("mqttSubscribe", topic);
+    },
+
+    removeCloudUserDevice(state, data) {
+      const topic = data.type + "/" + data.devId + "/+"; // NOTE!
+      this.commit("mqttUnsubscribe", topic);
+
+      const list = state.cloud.devices;
+      list.splice(list.indexOf(data), 1);
+    },
+
     setDeviceStatus(state, data) {
       if (state.application.debug) {
         window.console.log("setDeviceStatus:", data);
       }
 
-      for (let k = 0; k < state.deviceList.length; k++) {
-        if (
-          state.deviceList[k].type == data.type &&
-          state.deviceList[k].devId == data.devId
-        ) {
-          // window.console.log("Device:", state.deviceList[k]);
-          if (state.deviceList[k].online != (data.status.state != "offline")) {
-            state.deviceList[k].online = data.status.state != "offline";
+      const devices = state.cloud.devices;
 
-            window.console.log(
-              state.deviceList[k].type +
-                "/" +
-                state.deviceList[k].devId +
-                " online: " +
-                state.deviceList[k].online
-            );
-          }
-        }
+      let device = devices.filter((device) => {
+        return device.type == data.type && device.devId == data.devId;
+      });
+
+      if (device.length == 1) {
+        // window.console.log("Device:", device[0]);
+        const target = device[0];
+        Vue.set(target, "status", data.status);
+        Vue.set(target, "online", data.status.state != "offline");
+      } else {
+        window.console.log("Device select ERROR:", device);
       }
     },
 
@@ -354,128 +375,61 @@ export default new Vuex.Store({
         window.console.log("setDeviceData:", data);
       }
 
-      for (let k = 0; k < state.deviceList.length; k++) {
-        if (
-          state.deviceList[k].type == data.type &&
-          state.deviceList[k].devId == data.devId
-        ) {
-          Vue.set(state.deviceList[k], "data", data.value);
-          // window.console.log('data:', state.deviceList[k].data);
-        }
-      }
-    },
+      const devices = state.cloud.devices;
 
-    updateDeviceList(state, data) {
-      // unvalidate list
-      state.deviceList.forEach((item) => {
-        item.checked = false;
+      let device = devices.filter((device) => {
+        return device.type == data.type && device.devId == data.devId;
       });
 
-      for (let i = 0; i < data.length; i++) {
-        let index = -1;
-
-        for (let j = 0; j < state.deviceList.length; j++) {
-          if (
-            state.deviceList[j].type == data[i].type &&
-            state.deviceList[j].devId == data[i].devId
-          ) {
-            index = j;
-          }
-        }
-
-        if (index < 0) {
-          data[i].checked = true;
-          data[i].online = false;
-          data[i].data = { inputs: 0, outputs: 0 };
-
-          state.deviceList.push(data[i]);
-          index = state.deviceList.length - 1;
-
-          this.dispatch(
-            "mqttSubscribe",
-            state.deviceList[index].type +
-              "/" +
-              state.deviceList[index].devId +
-              "/#"
-          );
-        } else {
-          // Vue.set(state.deviceList[index], 'data', data);
-          // Vue.set(state.deviceList[index], 'online', online);
-          Vue.set(state.deviceList[index], "checked", true);
-
-          this.dispatch(
-            "mqttSubscribe",
-            state.deviceList[index].type +
-              "/" +
-              state.deviceList[index].devId +
-              "/#"
-          );
-          // window.console.log('updated: ',
-          //     state.deviceList[index].type + '/' +
-          //     state.deviceList[index].devId);
-        }
-      }
-
-      // delete & unsubscribe
-      for (let k = 0; k < state.deviceList.length; k++) {
-        if (state.deviceList[k].checked == false) {
-          this.dispatch(
-            "mqttUnsubscribe",
-            state.deviceList[k].type + "/" + state.deviceList[k].devId + "/#"
-          );
-          state.deviceList.splice(k);
-        }
+      if (device.length == 1) {
+        // window.console.log("Device:", device[0]);
+        const target = device[0];
+        Vue.set(target, "data", data.value);
+      } else {
+        window.console.log("Device select ERROR:", device);
       }
     },
   },
 
   actions: {
-    // requestCloudApi(context, req) {
-    //   if (context.state.debug) window.console.log("requestCloudApi data:", req);
-    //   if (!("url" in req)) {
-    //     window.console.log("ERROR: 'url' required!");
-    //     return;
-    //   }
-    //   if (!("method" in req)) {
-    //     window.console.log("ERROR: 'method' required!");
-    //     return;
-    //   }
-    //   axios({
-    //     url: req.url,
-    //     method: req.method,
-    //     baseURL: context.state.cloud.baseURL,
-    //     headers: "token" in req ? { Token: req.token } : null,
-    //     data: "data" in req ? req.data : null,
-    //   })
-    //     .then((response) => {
-    //       context.commit("_onCloudApiResponse", response);
-    //       if (
-    //         response.config.method === "post" &&
-    //         response.config.url == "/cloud/user/authorize"
-    //       ) {
-    //         // authorize request sent. set timeout
-    //         context.commit("_updateAuthorizeRequestTimeout", 5 * 60);
-    //         setTimeout(function f() {
-    //           context.commit("_updateAuthorizeRequestTimeout", -1);
-    //           if (context.state.cloud.authorizeRequestTimeout)
-    //             setTimeout(f, 1000);
-    //         }, 1000);
-    //       }
-    //     })
-    //     .catch((error) => window.console.log("requestCloudApi ERROR:", error));
+    // async_MQTT_ONMESSAGE(context, message) {
+    //   /**
+    //    *
+    //    */
+    //   context.commit("MQTT_ONMESSAGE", message);
     // },
-    // startIntervalPeriodic(context, interval = 1) {
-    //   if (_timer) clearInterval(_timer);
-    //   if (context.state.debug)
-    //     window.console.log("startIntervalPeriodic interval:", interval);
-    //   _timer = setInterval(() => {
-    //     if (_uptime % 15 == 0) {
-    //       //this.dispatch("");
-    //       window.console.log("uptime:", _uptime);
-    //     }
-    //     _uptime++;
-    //   }, interval * 1000);
-    // },
+
+    setCloudUserDevices(context, data) {
+      if (context.state.application.debug)
+        window.console.log("setCloudUserDevices:", data);
+
+      const list = context.state.cloud.devices;
+
+      // append new devices
+      for (let index in data) {
+        // window.console.log("item:", index);
+        let exist = list.filter(function(device) {
+          return (
+            device.type == data[index].type && device.devId == data[index].devId
+          );
+        });
+        if (!exist.length) {
+          context.commit("appendCloudUserDevice", data[index]);
+        }
+      }
+
+      // remove old devices
+      for (let index in list) {
+        let exist = data.filter(function(item) {
+          return (
+            item.type == list[index].type && item.devId == list[index].devId
+          );
+        });
+        if (!exist.length) {
+          context.commit("removeCloudUserDevice", list[index]);
+        }
+      }
+    },
   },
 
   modules: {},

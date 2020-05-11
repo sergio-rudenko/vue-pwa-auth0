@@ -82,10 +82,21 @@ export const confirmCode = (phone, code) => {
   return _requestApi(request);
 };
 
-export const getCloudData = (token) => {
+export const getCloudUserData = (token) => {
   // window.console.log("request");
   const request = {
     url: "/cloud/user/user",
+    method: "get",
+    token: token,
+  };
+
+  return _requestApi(request);
+};
+
+export const getCloudUserDevices = (token) => {
+  // window.console.log("request");
+  const request = {
+    url: "/cloud/user/devices",
     method: "get",
     token: token,
   };

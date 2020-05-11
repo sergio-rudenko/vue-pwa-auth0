@@ -15,15 +15,11 @@
         phone: <strong>{{ user_phone }}</strong>
       </p>
 
-      <p v-if="cloud.mqttUsername !== ''">
-        MQTT user: <strong>{{ cloud.mqttUsername }}</strong>
+      <p v-if="mqtt.username !== ''">
+        MQTT user: <strong>{{ mqtt.username }}</strong>
       </p>
-      <p v-if="cloud.mqttPassword !== ''">
-        MQTT pass: <strong>{{ cloud.mqttPassword }}</strong>
-      </p>
-
-      <p v-if="cloud.mqtt_message !== {}">
-        msg: <strong>{{ JSON.stringify(cloud.mqtt_message, null, 2) }}</strong>
+      <p v-if="mqtt.password !== ''">
+        MQTT pass: <strong>{{ mqtt.password }}</strong>
       </p>
     </div>
 
@@ -45,7 +41,7 @@ export default {
       "user_phone",
       "user_picture",
       "user_metadata",
-      "cloud",
+      "mqtt",
     ]),
   },
 

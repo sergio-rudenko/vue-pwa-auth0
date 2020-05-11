@@ -1,0 +1,42 @@
+[
+  {
+    "devId": "1234567890123456",
+    "alias": "test",
+    "description": "dummy",
+    "type": "FF00",
+    "userRole": "owner",
+    "userToken": "",
+    "guestToken": "",
+    "users": []
+  },
+  {
+    "devId": "NTdHEDI5MTA8AEoA",
+    "alias": "ESP::Cloud::D10263",
+    "description": "sample, CID:D10263",
+    "type": "FF00",
+    "userRole": "owner",
+    "userToken": "",
+    "guestToken": "",
+    "users": []
+  },
+  {
+    "devId": "6543210987654321",
+    "alias": "6543210987654321",
+    "description": "6543210987654321",
+    "type": "FF00",
+    "userRole": "owner",
+    "userToken": "",
+    "guestToken": "",
+    "users": []
+  },
+  {
+    "devId": "NTdHEDI5MTA8AEsA",
+    "alias": "ESP_3D8C3F",
+    "description": "test2",
+    "type": "FF00",
+    "userRole": "owner",
+    "userToken": "",
+    "guestToken": "",
+    "users": []
+  }
+]
