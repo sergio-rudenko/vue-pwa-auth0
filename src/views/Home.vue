@@ -1,6 +1,21 @@
 <template>
   <div class="home">
     <b-container>
+      <div
+        v-if="devices.lenght === 0"
+        style="text-align: center; margin-top: 20vmin"
+      >
+        <h5>Нет подключенных устройств...</h5>
+
+        <b-button class="mt-4" variant="primary" disabled>
+          Запросить устройство
+        </b-button>
+        <!-- <p>
+        Пожалуйста, воспользуйтесь кнопкой в меню или
+        <b-link to="/profile">ссылкой на профиль пользователя</b-link>
+      </p> -->
+      </div>
+
       <b-list-group class="mt-2">
         <b-list-group-item
           v-for="(device, i) in devices"
