@@ -2,7 +2,7 @@
   <div class="home">
     <b-container>
       <div
-        v-if="devices.lenght === 0"
+        v-if="devices.length === 0"
         style="text-align: center; margin-top: 20vmin"
       >
         <h5>Нет подключенных устройств...</h5>
