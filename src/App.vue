@@ -120,7 +120,7 @@ export default {
       getUserData(url, id)
         .then((data) => {
           // window.console.log(JSON.stringify(data));
-          this.$store.commit("setMetadata", data);
+          this.$store.commit("setAuthMetadata", data);
         })
         .catch((err) => {
           window.console.log("ERROR:", err.response);
@@ -129,7 +129,8 @@ export default {
     },
 
     // CLOUD
-    obtainCloudUserData(token) {
+    obtainCloudUserData() {
+      const token = this.user_metadata.bast_token;
       getCloudUserData(token)
         .then((response) => {
           // window.console.log(JSON.stringify(response.data));
@@ -137,11 +138,12 @@ export default {
         })
         .catch((err) => {
           window.console.log("ERROR:", err.response);
-          setTimeout(() => this.obtainCloudUserData(token), 5000);
+          setTimeout(() => this.obtainCloudUserData(), 5000);
         });
     },
 
-    obtainCloudUserDevices(token) {
+    obtainCloudUserDevices() {
+      const token = this.user_metadata.bast_token;
       getCloudUserDevices(token)
         .then((response) => {
           // window.console.log(JSON.stringify(response.data));
@@ -149,7 +151,7 @@ export default {
         })
         .catch((err) => {
           window.console.log("ERROR:", err.response);
-          setTimeout(() => this.obtainCloudUserDevices(token), 5000);
+          setTimeout(() => this.obtainCloudUserDevices(), 5000);
         });
     },
 
@@ -206,6 +208,7 @@ export default {
     ...mapGetters([
       "application_fsm",
       "user_phone",
+      "user_metadata",
       "mqtt",
       "mqtt_message",
       "is_mqtt_connected",
@@ -246,10 +249,6 @@ export default {
     application_fsm: function(value) {
       const FSM = value.states;
 
-      const store = this.$store;
-      const user_metadata = store.state.user.user_metadata;
-      const bast_token = user_metadata.bast_token;
-
       switch (value.fsm) {
         case FSM.INIT.REQUEST_USER_DATA:
           {
@@ -261,7 +260,7 @@ export default {
 
         case FSM.INIT.AUTHORIZATION:
           {
-            this.obtainCloudUserData(bast_token);
+            this.obtainCloudUserData();
           }
           break;
 
@@ -273,7 +272,7 @@ export default {
 
         case FSM.CONNECTED:
           {
-            this.obtainCloudUserDevices(bast_token);
+            this.obtainCloudUserDevices();
           }
           break;
       }

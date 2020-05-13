@@ -15,6 +15,10 @@
         phone: <strong>{{ user_phone }}</strong>
       </p>
 
+      <b-button v-if="!is_authorized" variant="warning" :to="'/authorize'">
+        Авторизация
+      </b-button>
+
       <p v-if="mqtt.username !== ''">
         MQTT user: <strong>{{ mqtt.username }}</strong>
       </p>

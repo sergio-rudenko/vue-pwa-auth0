@@ -34,7 +34,7 @@ export default new Vuex.Store({
   state: {
     application: {
       debug: true,
-      version: "0.1.0 /rc1/",
+      version: "0.1.0 /rc2/",
 
       fsm_state: FSM.INIT.AUTHENTIFICATION,
     },
@@ -204,33 +204,39 @@ export default new Vuex.Store({
       }
     },
 
-    setMetadata(state, data) {
+    setAuthMetadata(state, data) {
+      if (state.application.debug) window.console.log("setAuthMetadata:", data);
+
       if ("app_metadata" in data) {
         if (state.application.debug) {
-          window.console.log("setMetadata, app:", data.app_metadata);
+          window.console.log("set app_metadata:", data.app_metadata);
         }
         _updateObject(state.user.app_metadata, data.app_metadata);
       }
 
       if ("user_metadata" in data) {
         if (state.application.debug) {
-          window.console.log("setMetadata, user:", data.user_metadata);
+          window.console.log("set user_metadata:", data.user_metadata);
         }
 
-        const bast_token = state.user.user_metadata.bast_token;
-        if (data.user_metadata.bast_token != bast_token) {
+        let new_token =
+          "bast_token" in data.user_metadata
+            ? data.user_metadata.bast_token
+            : "";
+
+        let old_token = state.user.user_metadata.bast_token;
+
+        // NOTE! update BEFORE switch state
+        _updateObject(state.user.user_metadata, data.user_metadata);
+
+        if (new_token != old_token) {
           state.application.fsm_state = FSM.INIT.AUTHORIZATION;
         }
 
-        if (
-          !("bast_token" in data.user_metadata) ||
-          data.user_metadata.bast_token == ""
-        ) {
+        if (new_token == "") {
           window.console.log("NOT Authorized!");
           state.application.fsm_state = FSM.NOT.AUTHORIZED;
         }
-
-        _updateObject(state.user.user_metadata, data.user_metadata);
       }
     },
 

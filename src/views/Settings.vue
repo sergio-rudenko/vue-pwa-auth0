@@ -85,7 +85,7 @@ export default {
 
         updateUserData(url, user_id, metadata).then((data) => {
           // window.console.log("data:", data);
-          this.$store.commit("setMetadata", data);
+          this.$store.commit("setAuthMetadata", data);
         });
       }
     },
