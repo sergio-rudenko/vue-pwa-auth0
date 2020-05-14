@@ -202,7 +202,7 @@ export default {
         },
         {
           title: "Главная",
-          icon: "house",
+          icon: "house-door",
           path: "/",
           disabled: false,
           divider: true,
@@ -211,6 +211,13 @@ export default {
           title: "Пользователь",
           icon: "people-circle",
           path: "/profile",
+          disabled: false,
+          divider: true,
+        },
+        {
+          title: "Сообщения",
+          icon: "chat-square-dots",
+          path: "/messages",
           disabled: false,
           divider: true,
         },

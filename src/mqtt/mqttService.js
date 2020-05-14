@@ -13,6 +13,10 @@ const _client_id = [...Array(16)]
   .map(() => (~~(Math.random() * 36)).toString(36))
   .join("");
 
+export const mqttGetClientId = () => {
+  return _client_id;
+};
+
 /**
  * connect
  */
@@ -103,21 +107,4 @@ export const mqttSendMessage = (instance, data) => {
   msg.qos = data.qos || 0;
 
   instance.send(msg);
-};
-
-export const mqttHeartbeat = (store, user_id) => {
-  const instance = store.state.cloud.mqtt.instance;
-  if (instance != null && instance.isConnected()) {
-    mqttSendMessage(instance, {
-      topic: "status/" + user_id + "/" + _client_id,
-      payload: JSON.stringify({
-        user_id: atob(user_id), //FIXME
-        time_t: Math.trunc(new Date().getTime() / 1000),
-      }),
-      retain: false,
-      qos: 1,
-    });
-  } else {
-    mqttConnect(store);
-  }
 };

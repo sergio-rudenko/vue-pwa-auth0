@@ -38,6 +38,12 @@ const routes = [
     component: () => import("../views/Settings.vue"),
     beforeEnter: authenGuard,
   },
+  {
+    path: "/messages",
+    name: "Сообщения",
+    component: () => import("../views/Messages.vue"),
+    beforeEnter: authenGuard,
+  },
 
   {
     path: "/testing",

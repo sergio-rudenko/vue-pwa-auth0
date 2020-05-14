@@ -7,7 +7,7 @@
       >
         <h5>Нет подключенных устройств...</h5>
 
-        <b-button class="mt-4" variant="primary" disabled>
+        <b-button class="mt-4" variant="primary" @click="onDeviceRequest">
           Запросить устройство
         </b-button>
         <!-- <p>
@@ -42,6 +42,8 @@
 <script>
 import { mapGetters } from "vuex";
 
+import { mqttSendMessage } from "@/mqtt/mqttService";
+
 export default {
   name: "Home",
   components: {},
@@ -61,13 +63,36 @@ export default {
       }
     },
 
+    onDeviceRequest() {
+      // window.console.log("pressed");
+      // window.console.log("onSubmit");
+      const mqtt_instance = this.mqtt.instance;
+      if (mqtt_instance.isConnected())
+        mqttSendMessage(mqtt_instance, {
+          topic: "status/" + btoa(this.user.phone) + "/msg/chat",
+          payload: JSON.stringify({
+            from_id: btoa(this.user.phone),
+            to_id: btoa("+79185387721"),
+
+            text: "DeviceRequest!",
+            type: "manage",
+          }),
+        });
+    },
+
     onSelectDevice(device) {
       window.console.log("selected:", device);
     },
   },
 
   computed: {
-    ...mapGetters(["is_authenticated", "is_authorized", "devices"]),
+    ...mapGetters([
+      "is_authenticated",
+      "is_authorized",
+      "devices",
+      "user",
+      "mqtt",
+    ]),
   },
 
   watch: {

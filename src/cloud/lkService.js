@@ -1,16 +1,16 @@
 const axios = require("axios").default;
-const baseURL = "https://sa100cloud.com"; //FIXME!
+const baseURL = "https://sa100cloud.com/cloud"; //FIXME!
 
-const _requestApi = (req) => {
-  window.console.log("_requestApi req:", req);
+const _requestLkApi = (req) => {
+  window.console.log("API[/cloud] req:", req);
 
   if (!("url" in req)) {
-    window.console.log("ERROR: 'url' required!");
+    window.console.log("API[/cloud] ERROR: 'url' required!");
     throw "ERROR: 'url' required!";
   }
 
   if (!("method" in req)) {
-    window.console.log("ERROR: 'method' required!");
+    window.console.log("API[/cloud] ERROR: 'method' required!");
     throw "ERROR: 'method' required!";
   }
 
@@ -43,7 +43,7 @@ const _requestApi = (req) => {
 export const registerUser = (name, phone, email = "") => {
   // window.console.log("request");
   const request = {
-    url: "/cloud/user/registration",
+    url: "/user/registration",
     method: "post",
     data: {
       name: name,
@@ -52,26 +52,26 @@ export const registerUser = (name, phone, email = "") => {
     },
   };
 
-  return _requestApi(request);
+  return _requestLkApi(request);
 };
 
 export const authorizeUser = (userId) => {
   // window.console.log("request");
   const request = {
-    url: "/cloud/user/authorize",
+    url: "/user/authorize",
     method: "post",
     data: {
       userId: userId,
     },
   };
 
-  return _requestApi(request);
+  return _requestLkApi(request);
 };
 
 export const confirmCode = (phone, code) => {
   // window.console.log("request");
   const request = {
-    url: "/cloud/user/code",
+    url: "/user/code",
     method: "post",
     data: {
       userId: phone,
@@ -79,27 +79,27 @@ export const confirmCode = (phone, code) => {
     },
   };
 
-  return _requestApi(request);
+  return _requestLkApi(request);
 };
 
 export const getCloudUserData = (token) => {
   // window.console.log("request");
   const request = {
-    url: "/cloud/user/user",
+    url: "/user/user",
     method: "get",
     token: token,
   };
 
-  return _requestApi(request);
+  return _requestLkApi(request);
 };
 
 export const getCloudUserDevices = (token) => {
   // window.console.log("request");
   const request = {
-    url: "/cloud/user/devices",
+    url: "/user/devices",
     method: "get",
     token: token,
   };
 
-  return _requestApi(request);
+  return _requestLkApi(request);
 };

@@ -34,7 +34,7 @@ export default new Vuex.Store({
   state: {
     application: {
       debug: true,
-      version: "0.1.0 /rc3/",
+      version: "0.1.1 /rc1/",
 
       fsm_state: FSM.INIT.AUTHENTIFICATION,
     },
@@ -85,6 +85,13 @@ export default new Vuex.Store({
 
       devices: [],
       current_device_index: -1,
+
+      journal: {
+        token: "",
+        token_dt: "",
+        records: [],
+        messages: [],
+      },
     },
   },
 
@@ -170,6 +177,14 @@ export default new Vuex.Store({
     // CLOUD -----------------------------------------------------------------
     cloud: (state) => {
       return state.cloud;
+    },
+
+    cloud_journal_token: (state) => {
+      return state.cloud.journal.token;
+    },
+
+    cloud_messages: (state) => {
+      return state.cloud.journal.messages;
     },
 
     devices: (state) => {
@@ -337,6 +352,37 @@ export default new Vuex.Store({
     //     payload: message.payloadString,
     //   };
     // },
+
+    // CLOUD -----------------------------------------------------------------
+    setCloudJournalToken(state, data) {
+      if (state.application.debug) {
+        window.console.log("setCloudJournalToken:", data);
+      }
+
+      state.cloud.journal.token = data;
+      state.cloud.journal.token_dt = Date.now();
+    },
+
+    setJournalizedMessages(state, data) {
+      if (state.application.debug) {
+        window.console.log("setJournalizedMessages:", data);
+      }
+
+      const journal = state.cloud.journal;
+      if (data) {
+        Vue.set(journal, "messages", data);
+      } else {
+        Vue.set(journal, "messages", []);
+      }
+    },
+
+    appendJournalizedMessage(state, data) {
+      if (state.application.debug) {
+        window.console.log("appendJournalizedMessage:", data);
+      }
+      const journal = state.cloud.journal;
+      journal.messages.push(data);
+    },
 
     // DEVICE ----------------------------------------------------------------
     appendCloudUserDevice(state, data) {

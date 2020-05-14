@@ -68,9 +68,14 @@
 import { mapGetters } from "vuex";
 
 import { getUserData } from "@/auth/authService";
-import { getCloudUserData, getCloudUserDevices } from "@/cloud/cloudService";
+import { getCloudUserData, getCloudUserDevices } from "@/cloud/lkService";
+import { getJournalizedMessages } from "@/cloud/jrService";
 
-import { mqttConnect, mqttHeartbeat } from "@/mqtt/mqttService";
+import {
+  mqttConnect,
+  mqttGetClientId,
+  mqttSendMessage,
+} from "@/mqtt/mqttService";
 
 import AppNavigation from "@/components/AppNavigation.vue";
 import AppNotification from "@/components/AppNotification.vue";
@@ -155,23 +160,57 @@ export default {
         });
     },
 
+    refreshJournalToken(id) {
+      if (this.mqtt.instance.isConnected()) {
+        const journal = this.cloud.journal;
+
+        const token_delta = Date.now() - new Date(journal.token_dt);
+        const token_expired = token_delta >= 45 * 60 * 1000; /* 45 min */
+
+        if (journal.token == "" || token_expired) {
+          mqttSendMessage(this.mqtt.instance, {
+            topic: "status/" + id + "/journal/getJournalToken",
+            payload: "",
+            retain: false,
+            qos: 1,
+          });
+        }
+      }
+    },
+
     // MQTT
+    mqttHeartbeat(id) {
+      if (this.mqtt.instance.isConnected()) {
+        mqttSendMessage(this.mqtt.instance, {
+          topic: "status/" + id + "/" + mqttGetClientId(),
+          payload: JSON.stringify({
+            user_id: id,
+            time_t: Math.trunc(new Date().getTime() / 1000),
+          }),
+          retain: false,
+          qos: 1,
+        });
+      }
+    },
+
     initMqttConnection() {
       if (this.mqtt.instance === null) {
         mqttConnect(this.$store, this.onMqttMessage);
         setInterval(() => {
+          const id = btoa(this.user_phone); //FIXME!
+
           /* Heartbeat/Reconnect */
-          mqttHeartbeat(this.$store, btoa(this.user_phone));
+          this.mqttHeartbeat(id);
+
+          /* Journal Token Get/Refresh */
+          this.refreshJournalToken(id);
         }, 5000); //FOXME: interval
       }
     },
 
     onMqttMessage(msg) {
-      // if (this.$store.state.application.debug) {
-      //   window.console.log("msg:", msg);
-      // }
-
       let parts = null;
+      let processed = false;
       /**
        * Device status
        * example: 'FF00/NTdHEDI5MTA8AEoA/status'
@@ -179,6 +218,7 @@ export default {
       const device_status_topic = /^(.+)\/(.+)\/status$/;
       parts = String(msg.destinationName).match(device_status_topic);
       if (parts) {
+        processed = true;
         // window.console.log(`device ${parts[1]}/${parts[2]} status`);
         this.$store.commit("setDeviceStatus", {
           type: parts[1],
@@ -194,6 +234,7 @@ export default {
       const device_data_topic = /^(.+)\/(.+)\/data$/;
       parts = String(msg.destinationName).match(device_data_topic);
       if (parts) {
+        processed = true;
         // window.console.log(`device ${parts[1]}/${parts[2]} data`);
         this.$store.commit("setDeviceData", {
           type: parts[1],
@@ -201,18 +242,56 @@ export default {
           value: JSON.parse(msg.payloadString),
         });
       }
+
+      /**
+       * Journalize service Token
+       * example: 'status/Kzc5ODg4OTQ1MDgy/msg/journalToken'
+       */
+      const journal_token_topic = /^status\/(.+)\/msg\/journalToken$/;
+      if (String(msg.destinationName).match(journal_token_topic)) {
+        processed = true;
+        this.$store.commit("setCloudJournalToken", msg.payloadString);
+      }
+
+      /**
+       * Chat message
+       * example: 'status/Kzc5ODg4OTQ1MDgy/msg/chat'
+       */
+      const chat_message_topic = /^status\/(.+)\/msg\/chat$/;
+      if (String(msg.destinationName).match(chat_message_topic)) {
+        processed = true;
+        const now = new Date(Date.now());
+        this.$store.commit("appendJournalizedMessage", {
+          key: "chat",
+          value: msg.payloadString,
+          dt: now.toISOString(),
+        });
+      }
+
+      /* does not processed */
+      if (this.$store.state.application.debug && !processed) {
+        window.console.log("unhandled msg:", msg);
+        window.console.log("processed:", processed);
+      }
     },
   },
 
   computed: {
     ...mapGetters([
       "application_fsm",
+
       "user_phone",
       "user_metadata",
+
       "mqtt",
       "mqtt_message",
       "is_mqtt_connected",
+
       "devices",
+
+      "cloud",
+      "cloud_journal_token",
+      "cloud_messages",
     ]),
 
     auth0User() {
@@ -288,6 +367,25 @@ export default {
         const topic = "status/" + user_id + "/msg/#";
         this.$store.commit("mqttSubscribe", topic);
       }
+    },
+
+    cloud_journal_token: function(value) {
+      /**
+       * Get journalized messages from service
+       */
+      if (value && this.cloud_messages.length === 0) {
+        getJournalizedMessages(value, btoa(this.user_phone))
+          .then((response) => {
+            // window.console.log(JSON.stringify(response.data));
+            this.$store.commit("setJournalizedMessages", response.data);
+          })
+          .catch((err) => {
+            if ("response" in err) window.console.log("ERROR:", err.response);
+            else window.console.log("ERROR:", err);
+            // setTimeout(() => this.obtainCloudUserDevices(), 5000);
+          });
+      }
+      // window.console.log("cloud_journal_token:", value);
     },
 
     // devices: function(list, old) {

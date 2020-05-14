@@ -37,7 +37,7 @@
 import { mapGetters } from "vuex";
 
 import { updateUserData } from "@/auth/authService";
-import { registerUser, authorizeUser, confirmCode } from "@/cloud/cloudService";
+import { registerUser, authorizeUser, confirmCode } from "@/cloud/lkService";
 
 import InputUserPhone from "@/components/InputUserPhone.vue";
 import InputSmsCode from "@/components/InputSmsCode.vue";
