@@ -27,6 +27,12 @@
       </p>
     </div>
 
+    <b-button v-if="is_authenticated" @click="logout" variant="warning">
+      Выйти из аккаунта
+    </b-button>
+    <!-- <b-button v-else @click="login" variant="success">
+      Вход в аккаунт
+    </b-button> -->
     <!-- <div>
       <pre>{{ JSON.stringify($store.state.user, null, 2) }}</pre>
     </div> -->
@@ -37,8 +43,24 @@
 import { mapGetters } from "vuex";
 
 export default {
+  methods: {
+    login() {
+      window.console.log("login");
+      this.$auth.loginWithRedirect();
+      //this.$auth.loginWithPopup();
+    },
+
+    logout() {
+      window.console.log("logout...");
+      this.$auth.logout({
+        returnTo: window.location.origin,
+      });
+    },
+  },
+
   computed: {
     ...mapGetters([
+      "is_authenticated",
       "is_authorized",
       "user_name",
       "user_email",
