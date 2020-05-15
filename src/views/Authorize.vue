@@ -114,9 +114,7 @@ export default {
           }).then((data) => {
             // window.console.log("data:", data);
             this.$store.commit("setAuthMetadata", data);
-            //this.$router.push("/"); // redirect
           });
-
           // window.console.log("code confirmed!", result);
           this.$store.commit("setCloudUserData", result.data);
         })

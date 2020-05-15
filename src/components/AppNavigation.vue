@@ -1,29 +1,27 @@
 <template>
-  <div>
-    <b-navbar toggleable="true" type="dark" variant="primary">
-      <b-icon
-        icon="list"
-        scale="1.5"
-        class="text-light"
-        @click="sidebarActive = true"
-      />
-      <b-navbar-brand href="#">
-        {{ $route.name }}
-      </b-navbar-brand>
+  <b-navbar sticky toggleable="true" type="dark" variant="primary">
+    <b-icon
+      icon="list"
+      scale="1.5"
+      class="text-light"
+      @click="sidebarActive = true"
+    />
+    <b-navbar-brand href="#">
+      {{ $route.name }}
+    </b-navbar-brand>
 
-      <!-- TODO: CloudIndicator -->
-      <b-icon icon="star" scale="1.25" variant="secondary" />
-      <!-- <b-iconstack font-scale="2.5">
+    <!-- TODO: CloudIndicator -->
+    <b-icon icon="star" scale="1.25" variant="secondary" />
+    <!-- <b-iconstack font-scale="2.5">
         <b-icon stacked icon="cloud" scale="0.75" variant="secondary"></b-icon>
         <b-icon stacked icon="slash-circle" variant="warning"></b-icon>
       </b-iconstack> -->
-    </b-navbar>
 
     <b-sidebar v-model="sidebarActive" no-header backdrop>
       <template v-slot:default>
         <auth-user-card />
 
-        <!-- TODO: menu component -->
+        <!-- Application menu -->
         <b-list-group>
           <div v-for="(item, i) in menuItems" :key="i">
             <b-list-group-item
@@ -57,6 +55,7 @@
         </b-list-group>
       </template>
 
+      <!-- Sidebar footer -->
       <template v-slot:footer>
         <div class="d-flex bg-dark text-light align-items-center px-3 py-2">
           <strong class="mr-auto">version: {{ version }}</strong>
@@ -78,21 +77,7 @@
       </template>
     </b-sidebar>
 
-    <b-alert
-      v-model="updateAlertActive"
-      class="position-fixed fixed-bottom m-0 rounded-0"
-      style="z-index: 2000;"
-      variant="info"
-      dismissible
-    >
-      <b-container class="d-flex align-items-center">
-        <strong class="mr-auto">Доступна новая версия</strong>
-        <b-button @click="refreshApp" size="sm" variant="success">
-          Обновить
-        </b-button>
-      </b-container>
-    </b-alert>
-
+    <!-- New version alert -->
     <b-alert
       v-model="newVersionAlertActive"
       class="position-fixed fixed-bottom m-0 rounded-0"
@@ -105,7 +90,29 @@
         v{{ oldVersion }} -> v{{ version }}
       </b-container>
     </b-alert>
-  </div>
+
+    <!-- Update alert -->
+    <b-alert
+      v-model="updateAlertActive"
+      class="position-fixed fixed-bottom m-0 rounded-0"
+      style="z-index: 2000;"
+      variant="info"
+      dismissible
+    >
+      <b-container class="d-flex align-items-center">
+        <strong class="mr-auto">Доступна новая версия</strong>
+        <b-button
+          @click="refreshApp"
+          variant="success"
+          class="mt-3"
+          size="sm"
+          block
+        >
+          Обновить
+        </b-button>
+      </b-container>
+    </b-alert>
+  </b-navbar>
 </template>
 
 <script>
@@ -131,33 +138,33 @@ export default {
       this.updateAlertActive = true;
       this.updateExists = true;
 
-      if (Notification) {
-        if (Notification.permission === "granted") {
-          navigator.serviceWorker.getRegistration().then(function(reg) {
-            var options = {
-              body: "Доступна новая версия. Обновмте приложение.",
-              icon: "img/icons/android-chrome-192x192.png",
-              vibrate: [100, 50, 100],
-              data: {
-                dateOfArrival: Date.now(),
-                primaryKey: 1,
-              },
-              // actions: [
-              //   {
-              //     action: "explore",
-              //     title: "Explore this new world",
-              //     icon: "images/checkmark.png",
-              //   },
-              //   {
-              //     action: "close",
-              //     title: "Close notification",
-              //     icon: "images/xmark.png",
-              //   },
-              // ],
-            };
-            if (reg) reg.showNotification("Hello from vue pwa!", options);
-          });
-        }
+      const app = this.$root.$children[0]; // for access App
+
+      if (app.isNotificationPermitted) {
+        navigator.serviceWorker.getRegistration().then(function(reg) {
+          var options = {
+            body: "Доступна новая версия. Обновмте приложение.",
+            icon: "img/icons/android-chrome-192x192.png",
+            vibrate: [100, 50, 100],
+            data: {
+              dateOfArrival: Date.now(),
+              primaryKey: 1337,
+            },
+            // actions: [
+            //   {
+            //     action: "explore",
+            //     title: "Explore this new world",
+            //     icon: "images/checkmark.png",
+            //   },
+            //   {
+            //     action: "close",
+            //     title: "Close notification",
+            //     icon: "images/xmark.png",
+            //   },
+            // ],
+          };
+          if (reg) reg.showNotification("Обновление!", options);
+        });
       }
     },
 
@@ -170,6 +177,7 @@ export default {
     },
 
     reloadApp() {
+      localStorage.setItem("previous_version", this.version);
       window.location.reload();
     },
   },

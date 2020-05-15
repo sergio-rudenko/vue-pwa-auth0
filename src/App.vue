@@ -298,6 +298,19 @@ export default {
       return this.$auth.user;
     },
 
+    isNotificationAvaliable() {
+      return "Notification" in window;
+    },
+
+    isNotificationPermitted() {
+      var result = false;
+      if (this.isNotificationAvaliable) {
+        window.console.log("Notify permission:", Notification.permission);
+        result = Notification.permission === "granted";
+      }
+      return result;
+    },
+
     isReady() {
       const FSM = this.application_fsm.states;
       const fsm_state = this.application_fsm.fsm;

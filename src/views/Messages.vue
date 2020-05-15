@@ -27,6 +27,8 @@
       </b-list-group-item>
       <!-- <b-list-group-item>Vestibulum at eros</b-list-group-item> -->
     </b-list-group>
+
+    <b-button id="show-btn">Open Modal</b-button>
   </b-container>
 </template>
 
@@ -74,45 +76,7 @@ export default {
   },
 
   data: () => {
-    return {
-      messages: [
-        {
-          key: "chat",
-          value: '{"sender_id":"Kzc5ODg4OTQ1MDgy","text":"request!"}',
-          dt: "2020-05-13T13:13:53.862354",
-        },
-        {
-          key: "chat",
-          value:
-            '{"from_id":"Kzc5ODg4OTQ1MDgy","to_id":"Kzc5MTg1Mzg3NzIx","text":"DeviceRequest!","type":"manage"}',
-          dt: "2020-05-13T13:21:00.183404",
-        },
-        {
-          key: "chat",
-          value:
-            '{"from_id":"Kzc5ODg4OTQ1MDgy","to_id":"Kzc5MTg1Mzg3NzIx","text":"DeviceRequest!","type":"manage"}',
-          dt: "2020-05-13T15:45:58.253415",
-        },
-        {
-          key: "chat",
-          value:
-            '{"from_id":"Kzc5ODg4OTQ1MDgy","to_id":"Kzc5MTg1Mzg3NzIx","text":"DeviceRequest!","type":"manage"}',
-          dt: "2020-05-13T15:46:06.793869",
-        },
-        {
-          key: "chat",
-          value:
-            '{"from_id":"Kzc5ODg4OTQ1MDgy","to_id":"Kzc5MTg1Mzg3NzIx","text":"DeviceRequest!","type":"manage"}',
-          dt: "2020-05-13T15:46:32.100311",
-        },
-        {
-          key: "chat",
-          value:
-            '{"from_id":"Kzc5MTg1Mzg3NzIx","to_id":"Kzc5ODg4OTQ1MDgy","text":"No way!","type":"manage"}',
-          dt: "2020-05-13T16:44:15.187907",
-        },
-      ],
-    };
+    return {};
   },
 };
 </script>

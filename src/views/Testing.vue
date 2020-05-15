@@ -28,45 +28,28 @@ export default {
     sendNotification(i) {
       // https://developer.mozilla.org/ru/docs/Web/API/ServiceWorkerRegistration/showNotification
       const app = this.$root.$children[0]; // for access App
-      var msg = this.notifications[i];
+      var notification = this.notifications[i];
 
-      if (this.notificationAvaliable) {
-        if (this.notifyPermissionGranted) {
-          navigator.serviceWorker.getRegistration().then(function(reg) {
-            if (!msg.options.data) msg.options.data = {};
-            msg.options.data.dateOfArrival = Date.now();
-            msg.options.data.primaryKey = i;
+      if (app.isNotificationPermitted) {
+        navigator.serviceWorker.getRegistration().then(function(reg) {
+          if (!notification.options.data) notification.options.data = {};
+          notification.options.data.dateOfArrival = Date.now();
+          notification.options.data.primaryKey = i;
 
-            if (reg) {
-              // window.console.log("reg:", reg);
-              reg.showNotification(msg.title, msg.options);
-            } else {
-              app.showAlertNotification(msg);
-            }
-          });
-        } else {
-          window.console.log("permission:", Notification.permission);
-          app.showAlertNotification(msg);
-        }
+          if (reg) {
+            // window.console.log("reg:", reg);
+            reg.showNotification(notification.title, notification.options);
+          } else {
+            app.showAlertNotification(notification);
+          }
+        });
       } else {
-        app.showAlertNotification(msg);
+        app.showAlertNotification(notification);
       }
     },
   },
 
-  computed: {
-    notificationAvaliable() {
-      return "Notification" in window;
-    },
-
-    notifyPermissionGranted() {
-      var result = false;
-      if (this.notificationAvaliable)
-        result = Notification.permission === "granted";
-
-      return result;
-    },
-  },
+  computed: {},
 
   data: () => {
     return {

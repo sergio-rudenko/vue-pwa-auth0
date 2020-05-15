@@ -34,7 +34,7 @@ export default new Vuex.Store({
   state: {
     application: {
       debug: true,
-      version: "0.1.1 /rc1/",
+      version: "0.1.1",
 
       fsm_state: FSM.INIT.AUTHENTIFICATION,
     },
